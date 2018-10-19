@@ -96,7 +96,6 @@ public class UvHydroReportBuilderTest {
 
 		// Metadata
 		metadata = new UvHydroReportMetadata();
-		metadata.setPrimaryTsIdentifier(requestParams.getPrimaryTimeseriesIdentifier());
 		metadata.setStationId(primaryDesc.getLocationIdentifier());
 		metadata.setStationName(primaryLoc.getName());
 		metadata.setTimezone(primaryDesc.getUtcOffset());

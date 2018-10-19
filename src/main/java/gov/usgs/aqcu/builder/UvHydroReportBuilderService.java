@@ -153,19 +153,27 @@ public class UvHydroReportBuilderService {
 	}
 
 	protected UvHydroReport buildBaseReport(UvHydroRequestParameters requestParameters, Map<String, ParameterMetadata> parameterMetadata, 
-			Map<String, TimeSeriesDescription> tsMetadata, List<FieldVisitDataServiceResponse> primaryFieldVisitData, String requestingUser) 
+			Map<String, TimeSeriesDescription> tsMetadata, List<FieldVisitDataServiceResponse> primaryFieldVisitData, 
+			UvHydrographType uvType, String requestingUser) 
 	{
 		UvHydroReport base = new UvHydroReport();
-		TimeSeriesDescription primaryMetadata = tsMetadata.get(requestParameters.getPrimaryTimeseriesIdentifier());
 
 		// TS Data
+		TimeSeriesDescription primaryMetadata = tsMetadata.get(requestParameters.getPrimaryTimeseriesIdentifier());
 		base.setPrimarySeries(getTimeSeriesData(requestParameters, parameterMetadata, primaryMetadata, false, false));
-		base.setFirstStatDerived(getTimeSeriesData(requestParameters, parameterMetadata, tsMetadata.get(requestParameters.getFirstStatDerivedIdentifier()), false, true));
-		base.setSecondStatDerived(getTimeSeriesData(requestParameters, parameterMetadata, tsMetadata.get(requestParameters.getSecondStatDerivedIdentifier()), false, true));
-		base.setThirdStatDerived(getTimeSeriesData(requestParameters, parameterMetadata, tsMetadata.get(requestParameters.getThirdStatDerivedIdentifier()), false, true));
-		base.setFourthStatDerived(getTimeSeriesData(requestParameters, parameterMetadata, tsMetadata.get(requestParameters.getFourthStatDerivedIdentifier()), false, true));
-		base.setComparisonSeries(getTimeSeriesData(requestParameters, parameterMetadata, tsMetadata.get(requestParameters.getComparisonTimeseriesIdentifier()), false, false));
 		base.setPrimarySeriesRaw(getTimeSeriesData(requestParameters, parameterMetadata, primaryMetadata, true, false));
+		TimeSeriesDescription firstStatMetadata = tsMetadata.get(requestParameters.getFirstStatDerivedIdentifier());
+		base.setFirstStatDerived(getTimeSeriesData(requestParameters, parameterMetadata, firstStatMetadata, false, true));
+		TimeSeriesDescription secondStatMetadata = tsMetadata.get(requestParameters.getSecondStatDerivedIdentifier());
+		base.setSecondStatDerived(getTimeSeriesData(requestParameters, parameterMetadata, secondStatMetadata, false, true));
+		TimeSeriesDescription thirdStatMetadata = tsMetadata.get(requestParameters.getThirdStatDerivedIdentifier());
+		base.setThirdStatDerived(getTimeSeriesData(requestParameters, parameterMetadata, thirdStatMetadata, false, true));
+		TimeSeriesDescription fourthStatMetadata = tsMetadata.get(requestParameters.getFourthStatDerivedIdentifier());
+		base.setFourthStatDerived(getTimeSeriesData(requestParameters, parameterMetadata, fourthStatMetadata, false, true));
+		TimeSeriesDescription comparisonMetadata = tsMetadata.get(requestParameters.getComparisonTimeseriesIdentifier());
+		base.setComparisonSeries(getTimeSeriesData(requestParameters, parameterMetadata, comparisonMetadata, false, true));
+		TimeSeriesDescription referenceMetadata = tsMetadata.get(requestParameters.getReferenceTimeseriesIdentifier());
+		base.setReferenceSeries(getTimeSeriesData(requestParameters, parameterMetadata, referenceMetadata, false, false));
 
 		// Rating Shifts
 		if(requestParameters.getPrimaryRatingModelIdentifier() != null && !requestParameters.getPrimaryRatingModelIdentifier().isEmpty()) {
@@ -187,13 +195,34 @@ public class UvHydroReportBuilderService {
 			primaryMetadata.getLocationIdentifier()
 		);
 
-		// Report Metadata
+		// Base Report Metadata
 		base.setReportMetadata(getBaseReportMetadata(requestParameters,
 			requestingUser,
 			primaryLocation.getIdentifier(), 
+			uvType,
 			primaryMetadata.getIdentifier(),
 			primaryMetadata.getUtcOffset()
 		));
+
+		// Aditional Metadata
+		if(firstStatMetadata != null) {
+			base.getReportMetadata().setFirstStatDerivedLabel(firstStatMetadata.getIdentifier());
+		}
+		if(secondStatMetadata != null) {
+			base.getReportMetadata().setSecondStatDerivedLabel(secondStatMetadata.getIdentifier());
+		}
+		if(thirdStatMetadata != null) {
+			base.getReportMetadata().setThirdStatDerviedLabel(thirdStatMetadata.getIdentifier());
+		}
+		if(fourthStatMetadata != null) {
+			base.getReportMetadata().setFourthStatDerviedLabel(fourthStatMetadata.getIdentifier());
+		}
+		if(referenceMetadata != null) {
+			base.getReportMetadata().setReferenceParameter(referenceMetadata.getIdentifier());
+		}
+		if(comparisonMetadata != null) {
+			base.getReportMetadata().setComparisonParameter(comparisonMetadata.getIdentifier());
+		}
 
 		// SIMS URL
 		base.setSimsUrl(getSimsUrl(primaryLocation.getIdentifier()));
@@ -226,7 +255,7 @@ public class UvHydroReportBuilderService {
 		}
 
 		// Base Report
-		return buildBaseReport(requestParameters, parameterMetadata, tsMetadata, primaryFieldVisitData, requestingUser);
+		return buildBaseReport(requestParameters, parameterMetadata, tsMetadata, primaryFieldVisitData, UvHydrographType.DEFAULT, requestingUser);
 	}
 
 	protected UvHydroReport buildSWReport(UvHydroRequestParameters requestParameters, 
@@ -243,7 +272,7 @@ public class UvHydroReportBuilderService {
 		);
 
 		// Base Report
-		UvHydroReport report = buildBaseReport(requestParameters, parameterMetadata, tsMetadata, primaryFieldVisitData, requestingUser);
+		UvHydroReport report = buildBaseReport(requestParameters, parameterMetadata, tsMetadata, primaryFieldVisitData, UvHydrographType.SW, requestingUser);
 
 		// Primary Corrections
 		report.setPrimarySeriesCorrections(correctionListService.getExtendedCorrectionList(
@@ -272,6 +301,9 @@ public class UvHydroReportBuilderService {
 			report.setUpchainSeries(getTimeSeriesData(requestParameters, parameterMetadata, upchainMetadata, false, false));
 			report.setUpchainSeriesRaw(getTimeSeriesData(requestParameters, parameterMetadata, upchainMetadata, true, false));
 
+			// Metadata
+			report.getReportMetadata().setUpchainParameter(upchainMetadata.getIdentifier());
+
 			// Corrections
 			ZoneOffset upchainZoneOffset = TimeSeriesUtils.getZoneOffset(upchainMetadata);
 			report.setUpchainSeriesCorrections(correctionListService.getExtendedCorrectionList(
@@ -297,9 +329,6 @@ public class UvHydroReportBuilderService {
 			);
 		}
 
-		// Reference
-		report.setReferenceSeries(getTimeSeriesData(requestParameters, parameterMetadata, tsMetadata.get(requestParameters.getReferenceTimeseriesIdentifier()), false, false));
-
 		return report;
 	}
 
@@ -317,7 +346,7 @@ public class UvHydroReportBuilderService {
 		);
 		
 		// Base Report
-		UvHydroReport report = buildBaseReport(requestParameters, parameterMetadata, tsMetadata, primaryFieldVisitData, requestingUser);
+		UvHydroReport report = buildBaseReport(requestParameters, parameterMetadata, tsMetadata, primaryFieldVisitData, UvHydrographType.GW, requestingUser);
 
 		// Primary Corrections
 		report.setPrimarySeriesCorrections(correctionListService.getExtendedCorrectionList(
@@ -325,10 +354,7 @@ public class UvHydroReportBuilderService {
 			requestParameters.getStartInstant(primaryZoneOffset), 
 			requestParameters.getEndInstant(primaryZoneOffset), 
 			requestParameters.getExcludedCorrections()
-		));
-
-		// Reference
-		report.setReferenceSeries(getTimeSeriesData(requestParameters, parameterMetadata, tsMetadata.get(requestParameters.getReferenceTimeseriesIdentifier()), false, false));
+		));	
 
 		// GW Levels
 		if(!requestParameters.isExcludeDiscrete()) {
@@ -357,7 +383,7 @@ public class UvHydroReportBuilderService {
 		);
 		
 		// Base Report
-		UvHydroReport report = buildBaseReport(requestParameters, parameterMetadata, tsMetadata, primaryFieldVisitData, requestingUser);
+		UvHydroReport report = buildBaseReport(requestParameters, parameterMetadata, tsMetadata, primaryFieldVisitData, UvHydrographType.QW, requestingUser);
 
 		// Primary Corrections
 		report.setPrimarySeriesCorrections(correctionListService.getExtendedCorrectionList(
@@ -366,9 +392,6 @@ public class UvHydroReportBuilderService {
 			requestParameters.getEndInstant(primaryZoneOffset), 
 			requestParameters.getExcludedCorrections()
 		));
-
-		// Reference
-		report.setReferenceSeries(getTimeSeriesData(requestParameters, parameterMetadata, tsMetadata.get(requestParameters.getReferenceTimeseriesIdentifier()), false, false));
 
 		// Effective Shits
 		if(requestParameters.getReferenceRatingModelIdentifier() != null && !requestParameters.getReferenceTimeseriesIdentifier().isEmpty()) {
@@ -445,11 +468,11 @@ public class UvHydroReportBuilderService {
 			timeSeries.setDescription(tsDesc.getDescription());
 			timeSeries.setType(tsDesc.getParameter());
 			timeSeries.setUnits(tsDesc.getUnit());
-			timeSeries.setStartTime(tsDesc.getRawStartTime());
-			timeSeries.setEndTime(tsDesc.getRawEndTime());
 
 			// Time Series Data
 			TimeSeriesDataServiceResponse dataResponse = timeSeriesDataService.get(tsDesc.getUniqueId(), requestParameters, isRaw, isDaily, zoneOffset);
+			timeSeries.setStartTime(dataResponse.getTimeRange().getStartTime().DateTimeOffset);
+			timeSeries.setEndTime(dataResponse.getTimeRange().getEndTime().DateTimeOffset);
 			timeSeries.setApprovals(dataResponse.getApprovals());
 			timeSeries.setGapTolerances(dataResponse.getGapTolerances());
 			timeSeries.setGrades(dataResponse.getGrades());
@@ -634,16 +657,21 @@ public class UvHydroReportBuilderService {
 	}
 
 	protected UvHydroReportMetadata getBaseReportMetadata(UvHydroRequestParameters requestParameters, String requestingUser, 
-			String stationId, String primaryParameter, Double utcOffset) 
+			String stationId, UvHydrographType type, String primaryParameter, Double utcOffset) 
 	{
 		UvHydroReportMetadata metadata = new UvHydroReportMetadata();
 		metadata.setTitle(REPORT_TITLE);
 		metadata.setRequestingUser(requestingUser);
-		metadata.setPrimaryTsIdentifier(requestParameters.getPrimaryTimeseriesIdentifier());
 		metadata.setStationId(stationId);
+		metadata.setPrimaryParameter(primaryParameter);
 		metadata.setStationName(locationDescriptionListService.getByLocationIdentifier(stationId).getName());
 		metadata.setTimezone(utcOffset);
-		metadata.setPrimarySeriesLabel(primaryParameter);
+		metadata.setStartDate(requestParameters.getStartInstant(ZoneOffset.UTC));
+		metadata.setEndDate(requestParameters.getEndInstant(ZoneOffset.UTC));
+		metadata.setExcludeCorrections(String.join(",", requestParameters.getExcludedCorrections()));
+		metadata.setExcludeDiscrete(requestParameters.isExcludeDiscrete());
+		metadata.setExcludeZeroNegative(requestParameters.isExcludeZeroNegative());
+		metadata.setUvType(type);
 		
 		return metadata;
 	}
