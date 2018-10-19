@@ -54,6 +54,7 @@ public class WebMvcConfig extends WebMvcConfigurerAdapter {
 	public Gson gson() {
 		return AqcuGsonBuilderFactory.getConfiguredGsonBuilder()
 			.registerTypeAdapter(Json.class, new SwaggerGsonSerializer())
+			.disableHtmlEscaping()
 			.create();
 	}
 }

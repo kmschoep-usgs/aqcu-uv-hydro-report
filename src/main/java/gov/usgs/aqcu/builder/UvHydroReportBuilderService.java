@@ -228,13 +228,7 @@ public class UvHydroReportBuilderService {
 		base.setSimsUrl(getSimsUrl(primaryLocation.getIdentifier()));
 		
 		// Field Visit Readings
-		if(primaryFieldVisitData != null && !primaryFieldVisitData.isEmpty()) {
-			base.setPrimaryReadings(
-				getFieldVisitReadings(primaryFieldVisitData).stream()
-					.filter(r -> r.getParameter().contentEquals(primaryMetadata.getParameter()))
-					.collect(Collectors.toList())
-			);
-		}
+		base.setPrimaryReadings(getFilteredFieldVisitReadings(primaryFieldVisitData, primaryMetadata.getParameter()));
 
 		return base;
 	}
@@ -323,10 +317,7 @@ public class UvHydroReportBuilderService {
 			}
 
 			// Readings
-			report.setUpchainReadings(getFieldVisitReadings(primaryFieldVisitData).stream()
-				.filter(r -> r.getParameter().contentEquals(upchainMetadata.getParameter()))
-				.collect(Collectors.toList())
-			);
+			report.setUpchainReadings(getFilteredFieldVisitReadings(primaryFieldVisitData, upchainMetadata.getParameter()));
 		}
 
 		return report;
@@ -429,8 +420,8 @@ public class UvHydroReportBuilderService {
 			tsUidList.add(requestParameters.getUpchainTimeseriesIdentifier());
 		}
 
-		if(requestParameters.getReferenceRatingModelIdentifier() != null && !requestParameters.getReferenceRatingModelIdentifier().isEmpty()) {
-			tsUidList.add(requestParameters.getReferenceRatingModelIdentifier());
+		if(requestParameters.getReferenceTimeseriesIdentifier() != null && !requestParameters.getReferenceTimeseriesIdentifier().isEmpty()) {
+			tsUidList.add(requestParameters.getReferenceTimeseriesIdentifier());
 		}
 
 		if(requestParameters.getFirstStatDerivedIdentifier() != null && !requestParameters.getFirstStatDerivedIdentifier().isEmpty()) {
@@ -520,7 +511,7 @@ public class UvHydroReportBuilderService {
 			.map(x -> {
 				UvHydrographPoint uvPoint = new UvHydrographPoint();
 				uvPoint.setTime(x.getTimestamp());
-				uvPoint.setValue(new BigDecimal(x.getValue()));
+				uvPoint.setValue(BigDecimal.valueOf(x.getValue()));
 				return uvPoint;
 			})
 			.collect(Collectors.toList());
@@ -569,7 +560,7 @@ public class UvHydroReportBuilderService {
 		return ratingShifts;
 	}
 
-	protected List<UvHydrographReading> getFieldVisitReadings(List<FieldVisitDataServiceResponse> fieldVisitData) {
+	protected List<UvHydrographReading> getFilteredFieldVisitReadings(List<FieldVisitDataServiceResponse> fieldVisitData, String parameter) {
 		List<Reading> rawReadings = new ArrayList<>();
 		List<UvHydrographReading> result = new ArrayList<>();
 
@@ -594,6 +585,13 @@ public class UvHydroReportBuilderService {
 			}
 
 			result.add(newReading);
+		}
+
+		// Filter to parameter
+		if(!result.isEmpty() && parameter != null && !parameter.isEmpty()) {
+			result = result.stream()
+				.filter(r -> r.getParameter().contentEquals(parameter))
+				.collect(Collectors.toList());
 		}
 
 		return result;
