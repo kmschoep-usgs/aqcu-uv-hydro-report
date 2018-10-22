@@ -9,6 +9,7 @@ import com.aquaticinformatics.aquarius.sdk.timeseries.servicemodels.Publish.Grad
 import com.aquaticinformatics.aquarius.sdk.timeseries.servicemodels.Publish.Qualifier;
 
 import gov.usgs.aqcu.model.nwis.WaterLevelRecords;
+import gov.usgs.aqcu.model.nwis.WaterQualitySampleRecord;
 
 public class UvHydroReport {
 	private UvHydroReportMetadata reportMetadata;
