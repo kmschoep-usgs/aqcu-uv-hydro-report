@@ -90,7 +90,41 @@ public class UvHydroRequestParameters extends ReportRequestParameters {
 	public List<String> getExcludedCorrections() {
 		return excludedCorrections;
 	}
-	public void setExcludeDeleteRegionCorrections(List<String> excludedCorrections) {
+	public void setExcludedCorrections(List<String> excludedCorrections) {
 		this.excludedCorrections = excludedCorrections;
+	}
+	public List<String> getTsUidList() {
+		List<String> tsUidList = new ArrayList<>();
+		tsUidList.add(getPrimaryTimeseriesIdentifier());
+
+		if(getUpchainTimeseriesIdentifier() != null && !getUpchainTimeseriesIdentifier().isEmpty()) {
+			tsUidList.add(getUpchainTimeseriesIdentifier());
+		}
+
+		if(getReferenceTimeseriesIdentifier() != null && !getReferenceTimeseriesIdentifier().isEmpty()) {
+			tsUidList.add(getReferenceTimeseriesIdentifier());
+		}
+
+		if(getFirstStatDerivedIdentifier() != null && !getFirstStatDerivedIdentifier().isEmpty()) {
+			tsUidList.add(getFirstStatDerivedIdentifier());
+		}
+
+		if(getSecondStatDerivedIdentifier() != null && !getSecondStatDerivedIdentifier().isEmpty()) {
+			tsUidList.add(getSecondStatDerivedIdentifier());
+		}
+
+		if(getThirdStatDerivedIdentifier() != null && !getThirdStatDerivedIdentifier().isEmpty()) {
+			tsUidList.add(getThirdStatDerivedIdentifier());
+		}
+
+		if(getFourthStatDerivedIdentifier() != null && !getFourthStatDerivedIdentifier().isEmpty()) {
+			tsUidList.add(getFourthStatDerivedIdentifier());
+		}
+
+		if(getComparisonTimeseriesIdentifier() != null && !getComparisonTimeseriesIdentifier().isEmpty()) {
+			tsUidList.add(getComparisonTimeseriesIdentifier());
+		}
+
+		return tsUidList;
 	}
 }

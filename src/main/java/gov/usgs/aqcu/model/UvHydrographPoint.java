@@ -11,8 +11,12 @@ import java.time.temporal.Temporal;
  */
 public class UvHydrographPoint {
 	private Temporal time;
-
 	private BigDecimal value;
+
+	public UvHydrographPoint(Temporal time, BigDecimal value) {
+		setTime(time);
+		setValue(value);
+	}
 
 	public Temporal getTime() {
 		return time;

@@ -24,9 +24,11 @@ public class UvHydrographRatingShift {
 		applicableEndDateTime = sourceShift.getPeriodOfApplicability().getEndTime();
 		remarks =  sourceShift.getPeriodOfApplicability().getRemarks();
 		
-		for(RatingShiftPoint point : sourceShift.getShiftPoints()) {
-			shiftPoints.add(BigDecimal.valueOf(point.getShift()));
-			stagePoints.add(BigDecimal.valueOf(point.getInputValue()));
+		if(sourceShift.getShiftPoints() != null) {
+			for(RatingShiftPoint point : sourceShift.getShiftPoints()) {
+				shiftPoints.add(BigDecimal.valueOf(point.getShift()));
+				stagePoints.add(BigDecimal.valueOf(point.getInputValue()));
+			}
 		}
 	}
 	

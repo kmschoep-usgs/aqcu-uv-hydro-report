@@ -210,35 +210,35 @@ public class UvHydroReport {
 	public List<Qualifier> getAllQualifiers() {
 		Set<Qualifier> qualSet = new HashSet<>();
 
-		if(getPrimarySeries() != null) {
+		if(getPrimarySeries() != null && getPrimarySeries().getQualifiers() != null) {
 			qualSet.addAll(getPrimarySeries().getQualifiers());
 		}
 
-		if(getUpchainSeries() != null) {
+		if(getUpchainSeries() != null && getUpchainSeries().getQualifiers() != null) {
 			qualSet.addAll(getUpchainSeries().getQualifiers());
 		}
 
-		if(getReferenceSeries() != null) {
+		if(getReferenceSeries() != null && getReferenceSeries().getQualifiers() != null) {
 			qualSet.addAll(getReferenceSeries().getQualifiers());
 		}
 
-		if(getFirstStatDerived() != null) {
+		if(getFirstStatDerived() != null && getFirstStatDerived().getQualifiers() != null) {
 			qualSet.addAll(getFirstStatDerived().getQualifiers());
 		}
 
-		if(getSecondStatDerived() != null) {
+		if(getSecondStatDerived() != null && getSecondStatDerived().getQualifiers() != null) {
 			qualSet.addAll(getSecondStatDerived().getQualifiers());
 		}
 
-		if(getThirdStatDerived() != null) {
+		if(getThirdStatDerived() != null && getThirdStatDerived().getQualifiers() != null) {
 			qualSet.addAll(getThirdStatDerived().getQualifiers());
 		}
 
-		if(getFourthStatDerived() != null) {
+		if(getFourthStatDerived() != null && getFourthStatDerived().getQualifiers() != null) {
 			qualSet.addAll(getFourthStatDerived().getQualifiers());
 		}
 
-		if(getComparisonSeries() != null) {
+		if(getComparisonSeries() != null && getComparisonSeries().getQualifiers() != null) {
 			qualSet.addAll(getComparisonSeries().getQualifiers());
 		}
 
@@ -248,35 +248,35 @@ public class UvHydroReport {
 	public List<Grade> getAllGrades() {
 		Set<Grade> gradeSet = new HashSet<>();
 
-		if(getPrimarySeries() != null) {
+		if(getPrimarySeries() != null && getPrimarySeries().getGrades() != null) {
 			gradeSet.addAll(getPrimarySeries().getGrades());
 		}
 
-		if(getUpchainSeries() != null) {
+		if(getUpchainSeries() != null && getUpchainSeries().getGrades() != null) {
 			gradeSet.addAll(getUpchainSeries().getGrades());
 		}
 
-		if(getReferenceSeries() != null) {
+		if(getReferenceSeries() != null && getReferenceSeries().getGrades() != null) {
 			gradeSet.addAll(getReferenceSeries().getGrades());
 		}
 
-		if(getFirstStatDerived() != null) {
+		if(getFirstStatDerived() != null && getFirstStatDerived().getGrades() != null) {
 			gradeSet.addAll(getFirstStatDerived().getGrades());
 		}
 
-		if(getSecondStatDerived() != null) {
+		if(getSecondStatDerived() != null && getSecondStatDerived().getGrades() != null) {
 			gradeSet.addAll(getSecondStatDerived().getGrades());
 		}
 
-		if(getThirdStatDerived() != null) {
+		if(getThirdStatDerived() != null && getThirdStatDerived().getGrades() != null) {
 			gradeSet.addAll(getThirdStatDerived().getGrades());
 		}
 
-		if(getFourthStatDerived() != null) {
+		if(getFourthStatDerived() != null && getFourthStatDerived().getGrades() != null) {
 			gradeSet.addAll(getFourthStatDerived().getGrades());
 		}
 
-		if(getComparisonSeries() != null) {
+		if(getComparisonSeries() != null && getComparisonSeries().getGrades() != null) {
 			gradeSet.addAll(getComparisonSeries().getGrades());
 		}
 

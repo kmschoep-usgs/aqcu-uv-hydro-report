@@ -6,7 +6,6 @@ import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 import com.aquaticinformatics.aquarius.sdk.timeseries.servicemodels.Publish.TimeSeriesPoint;
@@ -19,7 +18,6 @@ import com.aquaticinformatics.aquarius.sdk.timeseries.servicemodels.Publish.Para
 import com.aquaticinformatics.aquarius.sdk.timeseries.servicemodels.Publish.Qualifier;
 import com.aquaticinformatics.aquarius.sdk.timeseries.servicemodels.Publish.RatingCurve;
 import com.aquaticinformatics.aquarius.sdk.timeseries.servicemodels.Publish.RatingShift;
-import com.aquaticinformatics.aquarius.sdk.timeseries.servicemodels.Publish.Reading;
 import com.aquaticinformatics.aquarius.sdk.timeseries.servicemodels.Publish.TimeSeriesDataServiceResponse;
 import com.aquaticinformatics.aquarius.sdk.timeseries.servicemodels.Publish.TimeSeriesDescription;
 
@@ -28,7 +26,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
 import gov.usgs.aqcu.model.FieldVisitMeasurement;
-import gov.usgs.aqcu.model.InstantRange;
 import gov.usgs.aqcu.model.UvHydroReport;
 import gov.usgs.aqcu.model.UvHydroReportMetadata;
 import gov.usgs.aqcu.model.UvHydrographEffectiveShifts;
@@ -38,7 +35,6 @@ import gov.usgs.aqcu.model.UvHydrographReading;
 import gov.usgs.aqcu.model.UvHydrographTimeSeries;
 import gov.usgs.aqcu.model.UvHydrographType;
 import gov.usgs.aqcu.model.nwis.GroundWaterParameter;
-import gov.usgs.aqcu.model.nwis.ParameterRecord;
 import gov.usgs.aqcu.parameter.UvHydroRequestParameters;
 import gov.usgs.aqcu.retrieval.CorrectionListService;
 import gov.usgs.aqcu.retrieval.EffectiveShiftsService;
@@ -54,13 +50,12 @@ import gov.usgs.aqcu.retrieval.TimeSeriesDescriptionListService;
 import gov.usgs.aqcu.util.AqcuTimeUtils;
 import gov.usgs.aqcu.util.DoubleWithDisplayUtil;
 import gov.usgs.aqcu.util.TimeSeriesUtils;
+import gov.usgs.aqcu.util.AqcuReportUtils;
 import gov.usgs.aqcu.retrieval.TimeSeriesDataService;
 
 @Service
 public class UvHydroReportBuilderService {
-	protected static final String ESTIMATED_QUALIFIER_VALUE = "ESTIMATED";
-	protected static final String VOLUMETRIC_FLOW_UNIT_GROUP_VALUE = "Volumetric Flow";
-	private static final String DISCHARGE_PARAMETER = "discharge";
+	public static final String DISCHARGE_PARAMETER = "discharge";
     public static final String GAGE_HEIGHT_PARAMETER = "gage height";
 	public static final String REPORT_TITLE = "UV Hydrograph";
 	public static final String REPORT_TYPE = "uvhydrograph";
@@ -114,7 +109,7 @@ public class UvHydroReportBuilderService {
 
 	public UvHydroReport buildReport(UvHydroRequestParameters requestParameters, String requestingUser) {
 		// Time Series Metadata
-		Map<String, TimeSeriesDescription> tsMetadata = timeSeriesDescriptionListService.getTimeSeriesDescriptionList(getTsUidList(requestParameters))
+		Map<String, TimeSeriesDescription> tsMetadata = timeSeriesDescriptionListService.getTimeSeriesDescriptionList(requestParameters.getTsUidList())
 			.stream().collect(Collectors.toMap(t -> t.getUniqueId(), t -> t));
 		TimeSeriesDescription primaryTsMetadata = tsMetadata.get(requestParameters.getPrimaryTimeseriesIdentifier());
 
@@ -122,7 +117,7 @@ public class UvHydroReportBuilderService {
 		Map<String, ParameterMetadata> parameterMetadata = parameterListService.getParameterMetadata();
 
 		// Determine UV Hydrograph Type
-		String nwisPcode = getNwisPcode(primaryTsMetadata.getParameter(), primaryTsMetadata.getUnit());
+		String nwisPcode = nwisRaService.getNwisPcode(primaryTsMetadata.getParameter(), primaryTsMetadata.getUnit());
 		GroundWaterParameter gwParam = GroundWaterParameter.getByDisplayName(primaryTsMetadata.getParameter());
 		UvHydrographType type = determineReportType(primaryTsMetadata, gwParam, nwisPcode);
 
@@ -171,7 +166,7 @@ public class UvHydroReportBuilderService {
 		TimeSeriesDescription fourthStatMetadata = tsMetadata.get(requestParameters.getFourthStatDerivedIdentifier());
 		base.setFourthStatDerived(getTimeSeriesData(requestParameters, parameterMetadata, fourthStatMetadata, false, true));
 		TimeSeriesDescription comparisonMetadata = tsMetadata.get(requestParameters.getComparisonTimeseriesIdentifier());
-		base.setComparisonSeries(getTimeSeriesData(requestParameters, parameterMetadata, comparisonMetadata, false, true));
+		base.setComparisonSeries(getTimeSeriesData(requestParameters, parameterMetadata, comparisonMetadata, false, false));
 		TimeSeriesDescription referenceMetadata = tsMetadata.get(requestParameters.getReferenceTimeseriesIdentifier());
 		base.setReferenceSeries(getTimeSeriesData(requestParameters, parameterMetadata, referenceMetadata, false, false));
 
@@ -182,7 +177,7 @@ public class UvHydroReportBuilderService {
 				requestParameters.getPrimaryRatingModelIdentifier(), 
 				TimeSeriesUtils.getZoneOffset(primaryMetadata)
 			));
-		} else if(requestParameters.getReferenceRatingModelIdentifier() != null && !requestParameters.getReferenceRatingModelIdentifier().isEmpty()) {
+		} else if(referenceMetadata != null && requestParameters.getReferenceRatingModelIdentifier() != null && !requestParameters.getReferenceRatingModelIdentifier().isEmpty()) {
 			base.setRatingShifts(getRatingShifts(
 				requestParameters, 
 				requestParameters.getReferenceRatingModelIdentifier(), 
@@ -198,7 +193,9 @@ public class UvHydroReportBuilderService {
 		// Base Report Metadata
 		base.setReportMetadata(getBaseReportMetadata(requestParameters,
 			requestingUser,
-			primaryLocation.getIdentifier(), 
+			primaryMetadata.getLocationIdentifier(),
+			primaryLocation.getName(),
+			comparisonMetadata != null ? comparisonMetadata.getLocationIdentifier() : null, 
 			uvType,
 			primaryMetadata.getIdentifier(),
 			primaryMetadata.getUtcOffset()
@@ -225,7 +222,7 @@ public class UvHydroReportBuilderService {
 		}
 
 		// SIMS URL
-		base.setSimsUrl(getSimsUrl(primaryLocation.getIdentifier()));
+		base.setSimsUrl(AqcuReportUtils.getSimsUrl(primaryLocation.getIdentifier(), simsUrl));
 		
 		// Field Visit Readings
 		base.setPrimaryReadings(getFilteredFieldVisitReadings(primaryFieldVisitData, primaryMetadata.getParameter()));
@@ -278,13 +275,16 @@ public class UvHydroReportBuilderService {
 
 		// Field Visit Measurements
 		if(requestParameters.getPrimaryRatingModelIdentifier() != null && !requestParameters.getPrimaryRatingModelIdentifier().isEmpty()) {
-			report.setFieldVisitMeasurements(getFieldVisitMeasurements(primaryFieldVisitData));
-		} else if(requestParameters.getReferenceRatingModelIdentifier() != null && !requestParameters.getPrimaryRatingModelIdentifier().isEmpty()) {
-			report.setFieldVisitMeasurements(getFieldVisitMeasurements(getFieldVisitData(
-				requestParameters,
-				tsMetadata.get(requestParameters.getReferenceTimeseriesIdentifier()).getLocationIdentifier(), 
-				TimeSeriesUtils.getZoneOffset(tsMetadata.get(requestParameters.getReferenceTimeseriesIdentifier()))
-			)));
+			report.setFieldVisitMeasurements(getFieldVisitMeasurements(primaryFieldVisitData, requestParameters.getPrimaryRatingModelIdentifier()));
+		} else if(requestParameters.getReferenceRatingModelIdentifier() != null && !requestParameters.getReferenceRatingModelIdentifier().isEmpty()) {
+			report.setFieldVisitMeasurements(getFieldVisitMeasurements(
+				getFieldVisitData(
+					requestParameters,
+					tsMetadata.get(requestParameters.getReferenceTimeseriesIdentifier()).getLocationIdentifier(), 
+					TimeSeriesUtils.getZoneOffset(tsMetadata.get(requestParameters.getReferenceTimeseriesIdentifier()))
+				),
+				requestParameters.getReferenceRatingModelIdentifier()
+			));
 		}
 
 		// Upchain
@@ -312,6 +312,7 @@ public class UvHydroReportBuilderService {
 				report.setEffectiveShifts(getEffectiveShifts(requestParameters, 
 					requestParameters.getUpchainTimeseriesIdentifier(), 
 					requestParameters.getPrimaryRatingModelIdentifier(),
+					report.getUpchainSeries().isVolumetricFlow(),
 					upchainZoneOffset
 				));
 			}
@@ -389,12 +390,14 @@ public class UvHydroReportBuilderService {
 			report.setEffectiveShifts(getEffectiveShifts(requestParameters, 
 				requestParameters.getReferenceTimeseriesIdentifier(), 
 				requestParameters.getReferenceRatingModelIdentifier(),
+				report.getReferenceSeries().isVolumetricFlow(),
 				TimeSeriesUtils.getZoneOffset(tsMetadata.get(requestParameters.getReferenceTimeseriesIdentifier()))
 			));
 		} else if(requestParameters.getPrimaryRatingModelIdentifier() != null && !requestParameters.getPrimaryRatingModelIdentifier().isEmpty()) {
 			report.setEffectiveShifts(getEffectiveShifts(requestParameters, 
 				requestParameters.getPrimaryTimeseriesIdentifier(), 
 				requestParameters.getPrimaryRatingModelIdentifier(),
+				report.getPrimarySeries().isVolumetricFlow(),
 				primaryZoneOffset
 			));
 		}
@@ -412,41 +415,6 @@ public class UvHydroReportBuilderService {
 		return report;
 	}
 
-	protected List<String> getTsUidList(UvHydroRequestParameters requestParameters) {
-		List<String> tsUidList = new ArrayList<>();
-		tsUidList.add(requestParameters.getPrimaryTimeseriesIdentifier());
-
-		if(requestParameters.getUpchainTimeseriesIdentifier() != null && !requestParameters.getUpchainTimeseriesIdentifier().isEmpty()) {
-			tsUidList.add(requestParameters.getUpchainTimeseriesIdentifier());
-		}
-
-		if(requestParameters.getReferenceTimeseriesIdentifier() != null && !requestParameters.getReferenceTimeseriesIdentifier().isEmpty()) {
-			tsUidList.add(requestParameters.getReferenceTimeseriesIdentifier());
-		}
-
-		if(requestParameters.getFirstStatDerivedIdentifier() != null && !requestParameters.getFirstStatDerivedIdentifier().isEmpty()) {
-			tsUidList.add(requestParameters.getFirstStatDerivedIdentifier());
-		}
-
-		if(requestParameters.getSecondStatDerivedIdentifier() != null && !requestParameters.getSecondStatDerivedIdentifier().isEmpty()) {
-			tsUidList.add(requestParameters.getSecondStatDerivedIdentifier());
-		}
-
-		if(requestParameters.getThirdStatDerivedIdentifier() != null && !requestParameters.getThirdStatDerivedIdentifier().isEmpty()) {
-			tsUidList.add(requestParameters.getThirdStatDerivedIdentifier());
-		}
-
-		if(requestParameters.getFourthStatDerivedIdentifier() != null && !requestParameters.getFourthStatDerivedIdentifier().isEmpty()) {
-			tsUidList.add(requestParameters.getFourthStatDerivedIdentifier());
-		}
-
-		if(requestParameters.getComparisonTimeseriesIdentifier() != null && !requestParameters.getComparisonTimeseriesIdentifier().isEmpty()) {
-			tsUidList.add(requestParameters.getComparisonTimeseriesIdentifier());
-		}
-
-		return tsUidList;
-	}
-
 	protected UvHydrographTimeSeries getTimeSeriesData(UvHydroRequestParameters requestParameters, 
 			Map<String, ParameterMetadata> parameterMetadata, TimeSeriesDescription tsDesc, Boolean isRaw, Boolean isDaily) 
 	{
@@ -461,7 +429,7 @@ public class UvHydroReportBuilderService {
 			timeSeries.setUnits(tsDesc.getUnit());
 
 			// Time Series Data
-			TimeSeriesDataServiceResponse dataResponse = timeSeriesDataService.get(tsDesc.getUniqueId(), requestParameters, isRaw, isDaily, zoneOffset);
+			TimeSeriesDataServiceResponse dataResponse = timeSeriesDataService.get(tsDesc.getUniqueId(), requestParameters, zoneOffset, isDaily, isRaw, true, null);
 			timeSeries.setStartTime(dataResponse.getTimeRange().getStartTime().DateTimeOffset);
 			timeSeries.setEndTime(dataResponse.getTimeRange().getEndTime().DateTimeOffset);
 			timeSeries.setApprovals(dataResponse.getApprovals());
@@ -470,8 +438,8 @@ public class UvHydroReportBuilderService {
 			timeSeries.setNotes(dataResponse.getNotes());
 			timeSeries.setInterpolationTypes(dataResponse.getInterpolationTypes());
 			timeSeries.setQualifiers(dataResponse.getQualifiers());
-			timeSeries.setEstimatedPeriods(getEstimatedPeriods(dataResponse.getQualifiers()));
-			timeSeries.isVolumetricFlow(getVolumetricFlow(parameterMetadata, dataResponse.getParameter()));
+			timeSeries.setEstimatedPeriods(TimeSeriesUtils.getEstimatedPeriods(dataResponse.getQualifiers()));
+			timeSeries.isVolumetricFlow(parameterListService.isVolumetricFlow(parameterMetadata, dataResponse.getParameter()));
 			timeSeries.setInverted(gwParam != null && gwParam.isInverted());
 
 			// Point Data
@@ -493,7 +461,17 @@ public class UvHydroReportBuilderService {
 		return null;		
 	}
 
-	protected UvHydrographEffectiveShifts getEffectiveShifts(UvHydroRequestParameters requestParameters, String tsUid, String ratingModelIdentifier, ZoneOffset zoneOffset) {
+	protected List<UvHydrographPoint> createUvHydroPointsFromTimeSeries(List<TimeSeriesPoint> timeSeriesPoints, Boolean isDaily, ZoneOffset zoneOffset) {
+		return timeSeriesPoints.parallelStream()
+			.filter(x -> x.getValue().getNumeric() != null)
+			.map(x -> new UvHydrographPoint(
+				AqcuTimeUtils.getTemporal(x.getTimestamp(), isDaily, zoneOffset), 
+				DoubleWithDisplayUtil.getRoundedValue(x.getValue())
+			))
+			.collect(Collectors.toList());
+	}
+
+	protected UvHydrographEffectiveShifts getEffectiveShifts(UvHydroRequestParameters requestParameters, String tsUid, String ratingModelIdentifier, Boolean isVolumetricFlow, ZoneOffset zoneOffset) {
 		UvHydrographEffectiveShifts result = new UvHydrographEffectiveShifts();
 		List<EffectiveShift> shifts = effectiveShiftsService.get(
 			tsUid,
@@ -501,34 +479,16 @@ public class UvHydroReportBuilderService {
 			requestParameters.getStartInstant(zoneOffset),
 			requestParameters.getEndInstant(zoneOffset)
 		);
-		result.setPoints(createUvHydroPointsFromEffectiveShifts(shifts, zoneOffset));
+		result.isVolumetricFlow(isVolumetricFlow);
+		result.setPoints(createUvHydroPointsFromEffectiveShifts(shifts));
 		return result;
 	}
 
-	protected List<UvHydrographPoint> createUvHydroPointsFromEffectiveShifts(List<EffectiveShift> effectiveShifts, ZoneOffset zoneOffset) {
-		List<UvHydrographPoint> uvPoints = effectiveShifts.parallelStream()
+	protected List<UvHydrographPoint> createUvHydroPointsFromEffectiveShifts(List<EffectiveShift> effectiveShifts) {
+		return effectiveShifts.parallelStream()
 			.filter(x -> x.getValue() != null)
-			.map(x -> {
-				UvHydrographPoint uvPoint = new UvHydrographPoint();
-				uvPoint.setTime(x.getTimestamp());
-				uvPoint.setValue(BigDecimal.valueOf(x.getValue()));
-				return uvPoint;
-			})
+			.map(x ->  new UvHydrographPoint(x.getTimestamp(), BigDecimal.valueOf(x.getValue())))
 			.collect(Collectors.toList());
-		return uvPoints;
-	}
-
-	protected List<UvHydrographPoint> createUvHydroPointsFromTimeSeries(List<TimeSeriesPoint> timeSeriesPoints, Boolean isDaily, ZoneOffset zoneOffset) {
-		List<UvHydrographPoint> uvPoints = timeSeriesPoints.parallelStream()
-			.filter(x -> x.getValue().getNumeric() != null)
-			.map(x -> {
-				UvHydrographPoint uvPoint = new UvHydrographPoint();
-				uvPoint.setTime(AqcuTimeUtils.getTemporal(x.getTimestamp(), isDaily, zoneOffset));
-				uvPoint.setValue(DoubleWithDisplayUtil.getRoundedValue(x.getValue()));
-				return uvPoint;
-			})
-			.collect(Collectors.toList());
-		return uvPoints;
 	}
 
 	protected List<UvHydrographRatingShift> getRatingShifts(UvHydroRequestParameters requestParameters, String ratingModelIdentifier, ZoneOffset zoneOffset) {
@@ -549,7 +509,7 @@ public class UvHydroReportBuilderService {
 		List<UvHydrographRatingShift> ratingShifts = new ArrayList<>();
 		for(RatingShift shift : ratingShiftList) {
 			for(RatingCurve curve : ratingCurvesList) {
-				if(curve.getShifts().contains(shift)) {
+				if(curve.getShifts() != null && curve.getShifts().contains(shift)) {
 					UvHydrographRatingShift newShift = new UvHydrographRatingShift(shift, curve.getId());
 					ratingShifts.add(newShift);
 					break;
@@ -558,43 +518,6 @@ public class UvHydroReportBuilderService {
 		}
 
 		return ratingShifts;
-	}
-
-	protected List<UvHydrographReading> getFilteredFieldVisitReadings(List<FieldVisitDataServiceResponse> fieldVisitData, String parameter) {
-		List<Reading> rawReadings = new ArrayList<>();
-		List<UvHydrographReading> result = new ArrayList<>();
-
-		// Collect all raw Readings
-		for(FieldVisitDataServiceResponse response : fieldVisitData) {
-			rawReadings.addAll(fieldVisitDataService.extractFieldVisitReadings(response));
-		}
-
-		// Create UV Hydrograph Readings from raw Readings
-		for(Reading reading : rawReadings) {
-			UvHydrographReading newReading = new UvHydrographReading();
-			newReading.setTime(reading.getTime());
-			newReading.setType(reading.getReadingType());
-			newReading.setParameter(reading.getParameter());
-
-			if(reading.getUncertainty() != null) {
-				newReading.setUncertainty(reading.getUncertainty().getDisplay());
-			}
-			
-			if(reading.getValue() != null) {
-				newReading.setValue(reading.getValue().getDisplay());
-			}
-
-			result.add(newReading);
-		}
-
-		// Filter to parameter
-		if(!result.isEmpty() && parameter != null && !parameter.isEmpty()) {
-			result = result.stream()
-				.filter(r -> r.getParameter().contentEquals(parameter))
-				.collect(Collectors.toList());
-		}
-
-		return result;
 	}
 
 	protected List<FieldVisitDataServiceResponse> getFieldVisitData(UvHydroRequestParameters requestParameters, String locationIdentifier, ZoneOffset zoneOffset) {
@@ -607,62 +530,36 @@ public class UvHydroReportBuilderService {
 		return result;
 	}
 
-	protected List<FieldVisitMeasurement> getFieldVisitMeasurements(List<FieldVisitDataServiceResponse> fieldVisitData) {
+	protected List<UvHydrographReading> getFilteredFieldVisitReadings(List<FieldVisitDataServiceResponse> fieldVisitData, String parameter) {
+		List<UvHydrographReading> result = new ArrayList<>();
+
+		for(FieldVisitDataServiceResponse response : fieldVisitData) {
+			result.addAll(fieldVisitDataService.extractFieldVisitReadings(response, parameter).stream()
+				.map(reading -> new UvHydrographReading(reading))
+				.collect(Collectors.toList()));
+		}
+
+		return result;
+	}
+
+	protected List<FieldVisitMeasurement> getFieldVisitMeasurements(List<FieldVisitDataServiceResponse> fieldVisitData, String ratingModelIdentifier) {
 		List<FieldVisitMeasurement> result = new ArrayList<>();
 		for(FieldVisitDataServiceResponse response : fieldVisitData) {
-			result.addAll(fieldVisitDataService.extractFieldVisitMeasurements(response));
+			result.addAll(fieldVisitDataService.extractFieldVisitMeasurements(response, ratingModelIdentifier));
 		}
 		return result;
 	}
 
-	protected List<InstantRange> getEstimatedPeriods(List<Qualifier> qualifiers) {
-		List<InstantRange> estimatedPeriods = qualifiers.stream()
-			.filter(x -> x.getIdentifier().equals(ESTIMATED_QUALIFIER_VALUE))
-			.map(x -> {
-				InstantRange dateRange = new InstantRange(x.getStartTime(), x.getEndTime());
-				return dateRange;
-			})
-			.collect(Collectors.toList());
-		return estimatedPeriods;
-	}
-
-	protected String getSimsUrl(String stationId) {
-		String url = null;
-		if (simsUrl != null && stationId != null) {
-			url = simsUrl + "?site_no=" + stationId;
-		}
-		return url;
-	}
-
-	protected String getNwisPcode(String aqName, String unit) {
-		String pcode = null;
-
-		// First find the NWIS name using the nameAliases
-		Optional<ParameterRecord> nwisName = nwisRaService.getAqParameterNames().parallelStream()
-				.filter(x -> x.getAlias().equals(aqName))
-				.findFirst();
-
-		if (nwisName.isPresent()) {
-			// then find the pcode using the name and unit
-			Optional<ParameterRecord> unitAlias = nwisRaService.getAqParameterUnits().parallelStream()
-					.filter(x -> x.getAlias().equals(unit) && x.getName().equals(nwisName.get().getName()))
-					.findAny();
-			if (unitAlias.isPresent()) {
-				pcode = unitAlias.get().getCode();
-			}
-		}
-		return pcode;
-	}
-
 	protected UvHydroReportMetadata getBaseReportMetadata(UvHydroRequestParameters requestParameters, String requestingUser, 
-			String stationId, UvHydrographType type, String primaryParameter, Double utcOffset) 
+			String stationId, String stationName, String comparisonStationId, UvHydrographType type, String primaryParameter, Double utcOffset) 
 	{
 		UvHydroReportMetadata metadata = new UvHydroReportMetadata();
 		metadata.setTitle(REPORT_TITLE);
 		metadata.setRequestingUser(requestingUser);
-		metadata.setStationId(stationId);
 		metadata.setPrimaryParameter(primaryParameter);
-		metadata.setStationName(locationDescriptionListService.getByLocationIdentifier(stationId).getName());
+		metadata.setStationName(stationName);
+		metadata.setStationId(stationId);
+		metadata.setComparisonStationId(comparisonStationId);
 		metadata.setTimezone(utcOffset);
 		metadata.setStartDate(requestParameters.getStartInstant(ZoneOffset.UTC));
 		metadata.setEndDate(requestParameters.getEndInstant(ZoneOffset.UTC));
@@ -687,10 +584,5 @@ public class UvHydroReportBuilderService {
         } else {
             return UvHydrographType.DEFAULT;
         }
-	}
-
-	protected Boolean getVolumetricFlow(Map<String, ParameterMetadata> parameterMetadata, String parameter) {
-		return parameterMetadata != null && parameterMetadata.containsKey(parameter) && VOLUMETRIC_FLOW_UNIT_GROUP_VALUE
-				.equalsIgnoreCase(parameterMetadata.get(parameter).getUnitGroupIdentifier());
 	}
 }
