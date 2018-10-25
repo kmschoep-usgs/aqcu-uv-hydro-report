@@ -1,5 +1,6 @@
 package gov.usgs.aqcu.model;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import com.aquaticinformatics.aquarius.sdk.timeseries.servicemodels.Publish.GradeMetadata;
@@ -23,6 +24,7 @@ public class UvHydroReportMetadata extends ReportMetadata {
 
 	public UvHydroReportMetadata() {
 		super();
+		gradeMetadata = new HashMap<>();
 	}
 
 	public String getPrimaryParameter() {

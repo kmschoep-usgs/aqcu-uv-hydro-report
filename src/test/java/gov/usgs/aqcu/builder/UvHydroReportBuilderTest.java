@@ -1,8 +1,10 @@
 package gov.usgs.aqcu.builder;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
@@ -66,13 +68,16 @@ import gov.usgs.aqcu.util.TimeSeriesUtils;
 
 import com.aquaticinformatics.aquarius.sdk.timeseries.servicemodels.Publish.FieldVisitDataServiceResponse;
 import com.aquaticinformatics.aquarius.sdk.timeseries.servicemodels.Publish.FieldVisitDescription;
+import com.aquaticinformatics.aquarius.sdk.timeseries.servicemodels.Publish.GradeMetadata;
 import com.aquaticinformatics.aquarius.sdk.timeseries.servicemodels.Publish.LocationDescription;
 import com.aquaticinformatics.aquarius.sdk.timeseries.servicemodels.Publish.Processor;
 import com.aquaticinformatics.aquarius.sdk.timeseries.servicemodels.Publish.Qualifier;
+import com.aquaticinformatics.aquarius.sdk.timeseries.servicemodels.Publish.QualifierMetadata;
 import com.aquaticinformatics.aquarius.sdk.timeseries.servicemodels.Publish.RatingCurve;
 import com.aquaticinformatics.aquarius.sdk.timeseries.servicemodels.Publish.RatingCurveListServiceResponse;
 import com.aquaticinformatics.aquarius.sdk.timeseries.servicemodels.Publish.RatingShift;
 import com.aquaticinformatics.aquarius.sdk.timeseries.servicemodels.Publish.Reading;
+import com.aquaticinformatics.aquarius.sdk.timeseries.servicemodels.Publish.Grade;
 import com.aquaticinformatics.aquarius.sdk.timeseries.servicemodels.Publish.StatisticalDateTimeOffset;
 import com.aquaticinformatics.aquarius.sdk.timeseries.servicemodels.Publish.StatisticalTimeRange;
 import com.aquaticinformatics.aquarius.sdk.timeseries.servicemodels.Publish.TimeSeriesDataServiceResponse;
@@ -1537,6 +1542,366 @@ public class UvHydroReportBuilderTest {
 
 	@Test
 	public void buildDefaultReportTest() {
-		
+		Qualifier q1 = new Qualifier();
+		q1.setStartTime(Instant.parse("2018-01-01T00:00:00Z"));
+		q1.setEndTime(Instant.parse("2018-02-01T00:00:00Z"));
+		q1.setIdentifier(TimeSeriesUtils.ESTIMATED_QUALIFIER_VALUE);
+		TimeSeriesPoint point1A = new TimeSeriesPoint();
+		point1A.setTimestamp(new StatisticalDateTimeOffset().setDateTimeOffset(Instant.parse("2018-01-01T00:00:00Z")).setRepresentsEndOfTimePeriod(false));
+		point1A.setValue(new DoubleWithDisplay().setNumeric(1.0D).setDisplay("1"));
+		TimeSeriesPoint point1B = new TimeSeriesPoint();
+		point1B.setTimestamp(new StatisticalDateTimeOffset().setDateTimeOffset(Instant.parse("2018-02-01T00:00:00Z")).setRepresentsEndOfTimePeriod(false));
+		point1B.setValue(new DoubleWithDisplay().setNumeric(null).setDisplay("2"));
+		TimeSeriesDescription desc1 = new TimeSeriesDescription();
+		desc1.setParameter(GroundWaterParameter.Wat_LVL_BLSD.getDisplayName());
+		desc1.setUniqueId("test1");
+		desc1.setUtcOffset(0.0D);
+		desc1.setDescription("test1-desc");
+		desc1.setUnit("test1-unit");
+		desc1.setIdentifier("test1-identifier");
+		desc1.setLocationIdentifier("test1-loc");
+		TimeSeriesDescription desc2 = new TimeSeriesDescription();
+		desc2.setParameter("test2-param");
+		desc2.setUniqueId("test2");
+		desc2.setUtcOffset(0.0D);
+		desc2.setDescription("test2-desc");
+		desc2.setUnit("test2-unit");
+		desc2.setIdentifier("test2-identifier");
+		desc2.setLocationIdentifier("test2-loc");
+		TimeSeriesDataServiceResponse resp1 = new TimeSeriesDataServiceResponse();
+		resp1.setTimeRange(new StatisticalTimeRange()
+			.setStartTime(new StatisticalDateTimeOffset().setDateTimeOffset(Instant.parse("2018-01-01T00:00:00Z")).setRepresentsEndOfTimePeriod(false))
+			.setEndTime(new StatisticalDateTimeOffset().setDateTimeOffset(Instant.parse("2018-02-01T00:00:00Z")).setRepresentsEndOfTimePeriod(false))
+		);
+		resp1.setApprovals(new ArrayList<>());
+		resp1.setGapTolerances(new ArrayList<>());
+		resp1.setGrades(new ArrayList<>());
+		resp1.setNotes(new ArrayList<>());
+		resp1.setInterpolationTypes(new ArrayList<>());
+		resp1.setQualifiers(new ArrayList<>());
+		resp1.setPoints(new ArrayList<>(Arrays.asList(point1A,point1B)));
+		TimeSeriesDataServiceResponse resp2 = new TimeSeriesDataServiceResponse();
+		resp2.setTimeRange(new StatisticalTimeRange()
+			.setStartTime(new StatisticalDateTimeOffset().setDateTimeOffset(Instant.parse("2018-01-01T00:00:00Z")).setRepresentsEndOfTimePeriod(false))
+			.setEndTime(new StatisticalDateTimeOffset().setDateTimeOffset(Instant.parse("2018-02-01T24:00:00Z")).setRepresentsEndOfTimePeriod(true))
+		);
+		resp2.setApprovals(new ArrayList<>());
+		resp2.setGapTolerances(new ArrayList<>());
+		resp2.setGrades(new ArrayList<>());
+		resp2.setNotes(new ArrayList<>());
+		resp2.setInterpolationTypes(new ArrayList<>());
+		resp2.setQualifiers(new ArrayList<>(Arrays.asList(q1)));
+		resp2.setPoints(new ArrayList<>());		
+		HashMap<String, TimeSeriesDescription> tsMetadata = new HashMap<>();
+		tsMetadata.put(desc1.getUniqueId(), desc1);
+		tsMetadata.put(desc2.getUniqueId(), desc2);
+		ReflectionTestUtils.setField(service, "simsUrl", "www.test.org");
+		given(dataService.get(eq("test1"), any(UvHydroRequestParameters.class), any(ZoneOffset.class), eq(false), anyBoolean(), eq(true), eq(null))).willReturn(
+			resp1
+		);
+		given(dataService.get(eq("test2"), any(UvHydroRequestParameters.class), any(ZoneOffset.class), eq(true), anyBoolean(), eq(true), eq(null))).willReturn(
+			resp2
+		);
+		given(paramService.isVolumetricFlow(any(Map.class), any(String.class))).willReturn(false);
+		given(gapsService.buildGapList(any(List.class), anyBoolean(), any(ZoneOffset.class))).willReturn(new ArrayList<>());
+		given(locationService.getByLocationIdentifier(any(String.class))).willReturn(primaryLoc);
+		given(curvesService.getAqcuFilteredRatingCurves(any(List.class), any(Instant.class), any(Instant.class))).willReturn(new ArrayList<>());
+		given(curvesService.getAqcuFilteredRatingShifts(any(List.class), any(Instant.class), any(Instant.class))).willReturn(new ArrayList<>());
+		given(curvesService.getRawResponse(any(String.class), any(Double.class), any(Instant.class), any(Instant.class))).willReturn(
+			new RatingCurveListServiceResponse().setRatingCurves(new ArrayList<>())
+		);
+		given(fieldVisitDescriptionService.getDescriptions(any(String.class), any(ZoneOffset.class), any(UvHydroRequestParameters.class))).willReturn(
+			new ArrayList<>()
+		);
+		given(fieldVisitDataService.get(any(String.class))).willReturn(
+			new FieldVisitDataServiceResponse()
+		);
+		given(fieldVisitDataService.extractFieldVisitMeasurements(any(FieldVisitDataServiceResponse.class), any(String.class))).willReturn(
+			new ArrayList<>()
+		);
+		given(fieldVisitDataService.extractFieldVisitReadings(any(FieldVisitDataServiceResponse.class), any(String.class))).willReturn(
+			new ArrayList<>()
+		);
+
+		UvHydroRequestParameters params;
+		UvHydroReport result;
+
+		params = new UvHydroRequestParameters();
+		params.setStartDate(LocalDate.parse("2018-01-01"));
+		params.setEndDate(LocalDate.parse("2018-02-01"));
+		params.setPrimaryTimeseriesIdentifier(desc1.getUniqueId());
+		params.setReferenceTimeseriesIdentifier(desc1.getUniqueId());
+		params.setComparisonTimeseriesIdentifier(desc1.getUniqueId());
+		params.setUpchainTimeseriesIdentifier(desc1.getUniqueId());
+		params.setFirstStatDerivedIdentifier(desc2.getUniqueId());
+		params.setSecondStatDerivedIdentifier(desc2.getUniqueId());
+		params.setThirdStatDerivedIdentifier(desc2.getUniqueId());
+		params.setFourthStatDerivedIdentifier(desc2.getUniqueId());
+		params.setPrimaryRatingModelIdentifier("test");
+		params.setReferenceRatingModelIdentifier("test");
+
+		result = service.buildDefaultReport(params, new HashMap<>(), tsMetadata, REQUESTING_USER);
+
+		assertNotNull(result.getPrimarySeries());
+		assertNotNull(result.getPrimarySeriesRaw());
+		assertNotNull(result.getFirstStatDerived());
+		assertNotNull(result.getSecondStatDerived());
+		assertNotNull(result.getThirdStatDerived());
+		assertNotNull(result.getFourthStatDerived());
+		assertNotNull(result.getReferenceSeries());
+		assertNotNull(result.getComparisonSeries());
+		assertNotNull(result.getRatingShifts());
+		assertNotNull(result.getPrimaryReadings());
+		assertNotNull(result.getSimsUrl());
+		assertNotNull(result.getReportMetadata());
+		assertNull(result.getGwlevel());
+		assertNull(result.getWaterQuality());
+		assertNull(result.getUpchainSeries());
+		assertNull(result.getUpchainSeriesRaw());
+		assertNull(result.getPrimarySeriesCorrections());
+		assertNull(result.getUpchainSeriesCorrections());
+		assertNull(result.getUpchainReadings());
+		assertNull(result.getFieldVisitMeasurements());
+		assertNull(result.getEffectiveShifts());
+		assertNotNull(result.getReportMetadata().getPrimaryParameter());
+		assertNotNull(result.getReportMetadata().getReferenceParameter());
+		assertNotNull(result.getReportMetadata().getComparisonParameter());
+		assertNotNull(result.getReportMetadata().getFirstStatDerivedLabel());
+		assertNotNull(result.getReportMetadata().getSecondStatDerivedLabel());
+		assertNotNull(result.getReportMetadata().getThirdStatDerviedLabel());
+		assertNotNull(result.getReportMetadata().getFourthStatDerviedLabel());
+		assertNotNull(result.getReportMetadata().getStationId());
+		assertNotNull(result.getReportMetadata().getStationName());
+		assertNotNull(result.getReportMetadata().getComparisonStationId());
+		assertNull(result.getReportMetadata().getUpchainParameter());
+		assertEquals(result.getPrimarySeries().getName(), desc1.getUniqueId());
+		assertEquals(result.getReferenceSeries().getName(), desc1.getUniqueId());
+		assertEquals(result.getComparisonSeries().getName(), desc1.getUniqueId());
+		assertEquals(result.getFirstStatDerived().getName(), desc2.getUniqueId());
+		assertEquals(result.getSecondStatDerived().getName(), desc2.getUniqueId());
+		assertEquals(result.getThirdStatDerived().getName(), desc2.getUniqueId());
+		assertEquals(result.getFourthStatDerived().getName(), desc2.getUniqueId());
+		assertEquals(result.getReportMetadata().getPrimaryParameter(), desc1.getIdentifier());
+		assertEquals(result.getReportMetadata().getReferenceParameter(), desc1.getIdentifier());
+		assertEquals(result.getReportMetadata().getComparisonParameter(), desc1.getIdentifier());
+		assertEquals(result.getReportMetadata().getFirstStatDerivedLabel(), desc2.getIdentifier());
+		assertEquals(result.getReportMetadata().getSecondStatDerivedLabel(), desc2.getIdentifier());
+		assertEquals(result.getReportMetadata().getThirdStatDerviedLabel(), desc2.getIdentifier());
+		assertEquals(result.getReportMetadata().getFourthStatDerviedLabel(), desc2.getIdentifier());
+		assertEquals(result.getReportMetadata().getStationId(), desc1.getLocationIdentifier());
+		assertEquals(result.getReportMetadata().getStationName(), primaryLoc.getName());
+		assertEquals(result.getReportMetadata().getComparisonStationId(), desc1.getLocationIdentifier());
+
+		params = new UvHydroRequestParameters();
+		params.setStartDate(LocalDate.parse("2018-01-01"));
+		params.setEndDate(LocalDate.parse("2018-02-01"));
+		params.setPrimaryTimeseriesIdentifier(desc1.getUniqueId());
+
+		result = service.buildDefaultReport(params, new HashMap<>(), tsMetadata, REQUESTING_USER);
+
+		assertNotNull(result.getPrimarySeries());
+		assertNotNull(result.getPrimarySeriesRaw());
+		assertNull(result.getPrimaryReadings());
+		assertNotNull(result.getSimsUrl());
+		assertNotNull(result.getReportMetadata());
+		assertNull(result.getFirstStatDerived());
+		assertNull(result.getSecondStatDerived());
+		assertNull(result.getThirdStatDerived());
+		assertNull(result.getFourthStatDerived());
+		assertNull(result.getReferenceSeries());
+		assertNull(result.getComparisonSeries());
+		assertNull(result.getRatingShifts());
+		assertNull(result.getGwlevel());
+		assertNull(result.getWaterQuality());
+		assertNull(result.getUpchainSeries());
+		assertNull(result.getUpchainSeriesRaw());
+		assertNull(result.getPrimarySeriesCorrections());
+		assertNull(result.getUpchainSeriesCorrections());
+		assertNull(result.getUpchainReadings());
+		assertNull(result.getFieldVisitMeasurements());
+		assertNull(result.getEffectiveShifts());
+		assertNotNull(result.getReportMetadata().getPrimaryParameter());
+		assertNull(result.getReportMetadata().getReferenceParameter());
+		assertNull(result.getReportMetadata().getComparisonParameter());
+		assertNull(result.getReportMetadata().getFirstStatDerivedLabel());
+		assertNull(result.getReportMetadata().getSecondStatDerivedLabel());
+		assertNull(result.getReportMetadata().getThirdStatDerviedLabel());
+		assertNull(result.getReportMetadata().getFourthStatDerviedLabel());
+		assertNotNull(result.getReportMetadata().getStationId());
+		assertNotNull(result.getReportMetadata().getStationName());
+		assertNull(result.getReportMetadata().getComparisonStationId());
+		assertNull(result.getReportMetadata().getUpchainParameter());
+		assertEquals(result.getPrimarySeries().getName(), desc1.getUniqueId());
+		assertEquals(result.getReportMetadata().getPrimaryParameter(), desc1.getIdentifier());
+		assertEquals(result.getReportMetadata().getStationId(), desc1.getLocationIdentifier());
+		assertEquals(result.getReportMetadata().getStationName(), primaryLoc.getName());
+	}
+
+	@Test
+	public void buildReportTest() {
+		Qualifier q1 = new Qualifier();
+		q1.setStartTime(Instant.parse("2018-01-01T00:00:00Z"));
+		q1.setEndTime(Instant.parse("2018-02-01T00:00:00Z"));
+		q1.setIdentifier(TimeSeriesUtils.ESTIMATED_QUALIFIER_VALUE);
+		TimeSeriesPoint point1A = new TimeSeriesPoint();
+		point1A.setTimestamp(new StatisticalDateTimeOffset().setDateTimeOffset(Instant.parse("2018-01-01T00:00:00Z")).setRepresentsEndOfTimePeriod(false));
+		point1A.setValue(new DoubleWithDisplay().setNumeric(1.0D).setDisplay("1"));
+		TimeSeriesPoint point1B = new TimeSeriesPoint();
+		point1B.setTimestamp(new StatisticalDateTimeOffset().setDateTimeOffset(Instant.parse("2018-02-01T00:00:00Z")).setRepresentsEndOfTimePeriod(false));
+		point1B.setValue(new DoubleWithDisplay().setNumeric(null).setDisplay("2"));
+		TimeSeriesDescription desc1 = new TimeSeriesDescription();
+		desc1.setParameter(GroundWaterParameter.Wat_LVL_BLSD.getDisplayName());
+		desc1.setUniqueId("test1");
+		desc1.setUtcOffset(0.0D);
+		desc1.setDescription("test1-desc");
+		desc1.setUnit("test1-unit");
+		desc1.setIdentifier("test1-identifier");
+		desc1.setLocationIdentifier("test1-loc");
+		TimeSeriesDescription desc2 = new TimeSeriesDescription();
+		desc2.setParameter("Discharge");
+		desc2.setUniqueId("test2");
+		desc2.setUtcOffset(0.0D);
+		desc2.setDescription("test2-desc");
+		desc2.setUnit("test2-unit");
+		desc2.setIdentifier("test2-identifier");
+		desc2.setLocationIdentifier("test2-loc");
+		TimeSeriesDescription desc3 = new TimeSeriesDescription();
+		desc3.setParameter("pcode-param");
+		desc3.setUniqueId("test3");
+		desc3.setUtcOffset(0.0D);
+		desc3.setDescription("test3-desc");
+		desc3.setUnit("test3-unit");
+		desc3.setIdentifier("test3-identifier");
+		desc3.setLocationIdentifier("test3-loc");
+		TimeSeriesDescription desc4 = new TimeSeriesDescription();
+		desc4.setParameter("test4-param");
+		desc4.setUniqueId("test4");
+		desc4.setUtcOffset(0.0D);
+		desc4.setDescription("test4-desc");
+		desc4.setUnit("test4-unit");
+		desc4.setIdentifier("test4-identifier");
+		desc4.setLocationIdentifier("test4-loc");
+		TimeSeriesDataServiceResponse resp1 = new TimeSeriesDataServiceResponse();
+		resp1.setTimeRange(new StatisticalTimeRange()
+			.setStartTime(new StatisticalDateTimeOffset().setDateTimeOffset(Instant.parse("2018-01-01T00:00:00Z")).setRepresentsEndOfTimePeriod(false))
+			.setEndTime(new StatisticalDateTimeOffset().setDateTimeOffset(Instant.parse("2018-02-01T00:00:00Z")).setRepresentsEndOfTimePeriod(false))
+		);
+		resp1.setApprovals(new ArrayList<>());
+		resp1.setGapTolerances(new ArrayList<>());
+		resp1.setGrades(new ArrayList<>());
+		resp1.setNotes(new ArrayList<>());
+		resp1.setInterpolationTypes(new ArrayList<>());
+		resp1.setQualifiers(new ArrayList<>());
+		resp1.setPoints(new ArrayList<>(Arrays.asList(point1A,point1B)));
+		TimeSeriesDataServiceResponse resp2 = new TimeSeriesDataServiceResponse();
+		resp2.setTimeRange(new StatisticalTimeRange()
+			.setStartTime(new StatisticalDateTimeOffset().setDateTimeOffset(Instant.parse("2018-01-01T00:00:00Z")).setRepresentsEndOfTimePeriod(false))
+			.setEndTime(new StatisticalDateTimeOffset().setDateTimeOffset(Instant.parse("2018-02-01T24:00:00Z")).setRepresentsEndOfTimePeriod(true))
+		);
+		resp2.setApprovals(new ArrayList<>());
+		resp2.setGapTolerances(new ArrayList<>());
+		resp2.setGrades(new ArrayList<>(Arrays.asList(new Grade())));
+		resp2.setNotes(new ArrayList<>());
+		resp2.setInterpolationTypes(new ArrayList<>());
+		resp2.setQualifiers(new ArrayList<>(Arrays.asList(q1)));
+		resp2.setPoints(new ArrayList<>());		
+		HashMap<String, TimeSeriesDescription> tsMetadata = new HashMap<>();
+		tsMetadata.put(desc1.getUniqueId(), desc1);
+		tsMetadata.put(desc2.getUniqueId(), desc2);
+		tsMetadata.put(desc3.getUniqueId(), desc3);
+		tsMetadata.put(desc4.getUniqueId(), desc4);
+		ReflectionTestUtils.setField(service, "simsUrl", "www.test.org");
+		HashMap<String, QualifierMetadata> qMeta = new HashMap<>();
+		qMeta.put("q1", new QualifierMetadata());
+		HashMap<String, GradeMetadata> gMeta = new HashMap<>();
+		gMeta.put("g1", new GradeMetadata());
+
+		given(descService.getTimeSeriesDescriptionList(any(List.class))).willReturn(Arrays.asList(desc1,desc2,desc3,desc4));
+		given(dataService.get(eq("test1"), any(UvHydroRequestParameters.class), any(ZoneOffset.class), anyBoolean(), anyBoolean(), eq(true), eq(null))).willReturn(
+			resp1
+		);
+		given(dataService.get(eq("test2"), any(UvHydroRequestParameters.class), any(ZoneOffset.class), anyBoolean(), anyBoolean(), eq(true), eq(null))).willReturn(
+			resp2
+		);
+		given(dataService.get(eq("test3"), any(UvHydroRequestParameters.class), any(ZoneOffset.class), anyBoolean(), anyBoolean(), eq(true), eq(null))).willReturn(
+			resp1
+		);
+		given(dataService.get(eq("test4"), any(UvHydroRequestParameters.class), any(ZoneOffset.class), anyBoolean(), anyBoolean(), eq(true), eq(null))).willReturn(
+			resp2
+		);
+		given(nwisraService.getNwisPcode(eq("pcode-param"), any(String.class))).willReturn("pcode");
+		given(paramService.isVolumetricFlow(any(Map.class), any(String.class))).willReturn(false);
+		given(gapsService.buildGapList(any(List.class), anyBoolean(), any(ZoneOffset.class))).willReturn(new ArrayList<>());
+		given(locationService.getByLocationIdentifier(any(String.class))).willReturn(primaryLoc);
+		given(curvesService.getAqcuFilteredRatingCurves(any(List.class), any(Instant.class), any(Instant.class))).willReturn(new ArrayList<>());
+		given(curvesService.getAqcuFilteredRatingShifts(any(List.class), any(Instant.class), any(Instant.class))).willReturn(new ArrayList<>());
+		given(curvesService.getRawResponse(any(String.class), any(Double.class), any(Instant.class), any(Instant.class))).willReturn(
+			new RatingCurveListServiceResponse().setRatingCurves(new ArrayList<>())
+		);
+		given(fieldVisitDescriptionService.getDescriptions(any(String.class), any(ZoneOffset.class), any(UvHydroRequestParameters.class))).willReturn(
+			new ArrayList<>()
+		);
+		given(fieldVisitDataService.get(any(String.class))).willReturn(
+			new FieldVisitDataServiceResponse()
+		);
+		given(fieldVisitDataService.extractFieldVisitMeasurements(any(FieldVisitDataServiceResponse.class), any(String.class))).willReturn(
+			new ArrayList<>()
+		);
+		given(fieldVisitDataService.extractFieldVisitReadings(any(FieldVisitDataServiceResponse.class), any(String.class))).willReturn(
+			new ArrayList<>()
+		);
+		given(qualService.getByQualifierList(any(List.class))).willReturn(
+			qMeta
+		);
+		given(gradeService.getByGradeList(any(List.class))).willReturn(
+			gMeta
+		);
+
+		UvHydroRequestParameters params;
+		UvHydroReport result;
+
+		params = new UvHydroRequestParameters();
+		params.setStartDate(LocalDate.parse("2018-01-01"));
+		params.setEndDate(LocalDate.parse("2018-02-01"));
+		params.setPrimaryTimeseriesIdentifier(desc1.getUniqueId());
+
+		result = service.buildReport(params, REQUESTING_USER);
+
+		assertEquals(result.getReportMetadata().getUvType(), UvHydrographType.GW);
+		assertTrue(result.getReportMetadata().getGradeMetadata().isEmpty());
+		assertTrue(result.getReportMetadata().getQualifierMetadata().isEmpty());
+
+		params = new UvHydroRequestParameters();
+		params.setStartDate(LocalDate.parse("2018-01-01"));
+		params.setEndDate(LocalDate.parse("2018-02-01"));
+		params.setPrimaryTimeseriesIdentifier(desc2.getUniqueId());
+
+		result = service.buildReport(params, REQUESTING_USER);
+
+		assertEquals(result.getReportMetadata().getUvType(), UvHydrographType.SW);
+		assertFalse(result.getReportMetadata().getGradeMetadata().isEmpty());
+		assertFalse(result.getReportMetadata().getQualifierMetadata().isEmpty());
+
+		params = new UvHydroRequestParameters();
+		params.setStartDate(LocalDate.parse("2018-01-01"));
+		params.setEndDate(LocalDate.parse("2018-02-01"));
+		params.setPrimaryTimeseriesIdentifier(desc3.getUniqueId());
+
+		result = service.buildReport(params, REQUESTING_USER);
+
+		assertEquals(result.getReportMetadata().getUvType(), UvHydrographType.QW);
+		assertTrue(result.getReportMetadata().getGradeMetadata().isEmpty());
+		assertTrue(result.getReportMetadata().getQualifierMetadata().isEmpty());
+
+		params = new UvHydroRequestParameters();
+		params.setStartDate(LocalDate.parse("2018-01-01"));
+		params.setEndDate(LocalDate.parse("2018-02-01"));
+		params.setPrimaryTimeseriesIdentifier(desc4.getUniqueId());
+
+		result = service.buildReport(params, REQUESTING_USER);
+
+		assertEquals(result.getReportMetadata().getUvType(), UvHydrographType.DEFAULT);
+		assertFalse(result.getReportMetadata().getGradeMetadata().isEmpty());
+		assertFalse(result.getReportMetadata().getQualifierMetadata().isEmpty());
 	}
 }

@@ -225,8 +225,10 @@ public class UvHydroReportBuilderService {
 		base.setSimsUrl(AqcuReportUtils.getSimsUrl(primaryLocation.getIdentifier(), simsUrl));
 		
 		// Field Visit Readings
-		base.setPrimaryReadings(getFilteredFieldVisitReadings(primaryFieldVisitData, primaryMetadata.getParameter()));
-
+		if(primaryFieldVisitData != null) {
+			base.setPrimaryReadings(getFilteredFieldVisitReadings(primaryFieldVisitData, primaryMetadata.getParameter()));
+		}
+		
 		return base;
 	}
 
