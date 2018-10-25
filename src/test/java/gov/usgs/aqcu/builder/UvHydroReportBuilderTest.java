@@ -553,7 +553,7 @@ public class UvHydroReportBuilderTest {
 		assertEquals(result.getPoints().size(), 1);
 		assertEquals(result.getDescription(), desc1.getDescription());
 		assertEquals(result.getType(), desc1.getParameter());
-		assertEquals(result.getUnits(), desc1.getUnit());
+		assertEquals(result.getUnit(), desc1.getUnit());
 		assertEquals(result.getStartTime(), resp1.getTimeRange().getStartTime().DateTimeOffset);
 		assertEquals(result.getEndTime(), resp1.getTimeRange().getEndTime().DateTimeOffset);
 		assertEquals(result.getApprovals(), resp1.getApprovals());
@@ -570,7 +570,7 @@ public class UvHydroReportBuilderTest {
 		assertEquals(result.getPoints().size(), 0);
 		assertEquals(result.getDescription(), desc2.getDescription());
 		assertEquals(result.getType(), desc2.getParameter());
-		assertEquals(result.getUnits(), desc2.getUnit());
+		assertEquals(result.getUnit(), desc2.getUnit());
 		assertEquals(result.getStartTime(), resp2.getTimeRange().getStartTime().DateTimeOffset);
 		assertEquals(result.getEndTime(), resp2.getTimeRange().getEndTime().DateTimeOffset);
 		assertEquals(result.getApprovals(), resp2.getApprovals());
@@ -651,7 +651,7 @@ public class UvHydroReportBuilderTest {
 		assertEquals(result.getPoints().size(), 1);
 		assertEquals(result.getDescription(), desc1.getDescription());
 		assertEquals(result.getType(), desc1.getParameter());
-		assertEquals(result.getUnits(), desc1.getUnit());
+		assertEquals(result.getUnit(), desc1.getUnit());
 		assertEquals(result.getStartTime(), resp1.getTimeRange().getStartTime().DateTimeOffset);
 		assertEquals(result.getEndTime(), resp1.getTimeRange().getEndTime().DateTimeOffset);
 		assertEquals(result.getApprovals(), resp1.getApprovals());
@@ -668,7 +668,7 @@ public class UvHydroReportBuilderTest {
 		assertEquals(result.getPoints().size(), 0);
 		assertEquals(result.getDescription(), desc2.getDescription());
 		assertEquals(result.getType(), desc2.getParameter());
-		assertEquals(result.getUnits(), desc2.getUnit());
+		assertEquals(result.getUnit(), desc2.getUnit());
 		assertEquals(result.getStartTime(), resp2.getTimeRange().getStartTime().DateTimeOffset);
 		assertEquals(result.getEndTime(), resp2.getTimeRange().getEndTime().DateTimeOffset);
 		assertEquals(result.getApprovals(), resp2.getApprovals());

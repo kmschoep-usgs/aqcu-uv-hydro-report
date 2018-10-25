@@ -28,7 +28,7 @@ public class UvHydrographTimeSeries {
     private Instant endTime;
     private String name;
     private String type;
-    private String units;
+    private String unit;
     private String description;
     private Boolean inverted;
     private Boolean isVolumetricFlow;
@@ -86,8 +86,8 @@ public class UvHydrographTimeSeries {
         return type;
     }
 
-    public String getUnits() {
-        return units;
+    public String getUnit() {
+        return unit;
     }
 
     public String getDescription() {
@@ -154,8 +154,8 @@ public class UvHydrographTimeSeries {
         this.type = type;
     }
 
-    public void setUnits(String units) {
-        this.units = units;
+    public void setUnits(String unit) {
+        this.unit = unit;
     }
 
     public void setDescription(String description) {
