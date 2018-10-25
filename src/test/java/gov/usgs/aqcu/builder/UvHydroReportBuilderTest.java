@@ -689,7 +689,6 @@ public class UvHydroReportBuilderTest {
 		q1.setStartTime(Instant.parse("2018-01-01T00:00:00Z"));
 		q1.setEndTime(Instant.parse("2018-02-01T00:00:00Z"));
 		q1.setIdentifier(TimeSeriesUtils.ESTIMATED_QUALIFIER_VALUE);
-		DataGap gap1 = new DataGap();
 		TimeSeriesPoint point1A = new TimeSeriesPoint();
 		point1A.setTimestamp(new StatisticalDateTimeOffset().setDateTimeOffset(Instant.parse("2018-01-01T00:00:00Z")).setRepresentsEndOfTimePeriod(false));
 		point1A.setValue(new DoubleWithDisplay().setNumeric(1.0D).setDisplay("1"));
@@ -923,7 +922,6 @@ public class UvHydroReportBuilderTest {
 		q1.setStartTime(Instant.parse("2018-01-01T00:00:00Z"));
 		q1.setEndTime(Instant.parse("2018-02-01T00:00:00Z"));
 		q1.setIdentifier(TimeSeriesUtils.ESTIMATED_QUALIFIER_VALUE);
-		DataGap gap1 = new DataGap();
 		TimeSeriesPoint point1A = new TimeSeriesPoint();
 		point1A.setTimestamp(new StatisticalDateTimeOffset().setDateTimeOffset(Instant.parse("2018-01-01T00:00:00Z")).setRepresentsEndOfTimePeriod(false));
 		point1A.setValue(new DoubleWithDisplay().setNumeric(1.0D).setDisplay("1"));
@@ -1150,12 +1148,12 @@ public class UvHydroReportBuilderTest {
 	}
 
 	@Test
+	@SuppressWarnings("unchecked")
 	public void buildGWReportTest() {
 		Qualifier q1 = new Qualifier();
 		q1.setStartTime(Instant.parse("2018-01-01T00:00:00Z"));
 		q1.setEndTime(Instant.parse("2018-02-01T00:00:00Z"));
 		q1.setIdentifier(TimeSeriesUtils.ESTIMATED_QUALIFIER_VALUE);
-		DataGap gap1 = new DataGap();
 		TimeSeriesPoint point1A = new TimeSeriesPoint();
 		point1A.setTimestamp(new StatisticalDateTimeOffset().setDateTimeOffset(Instant.parse("2018-01-01T00:00:00Z")).setRepresentsEndOfTimePeriod(false));
 		point1A.setValue(new DoubleWithDisplay().setNumeric(1.0D).setDisplay("1"));
@@ -1347,12 +1345,12 @@ public class UvHydroReportBuilderTest {
 	}
 
 	@Test
+	@SuppressWarnings("unchecked")
 	public void buildSWReportTest() {
 		Qualifier q1 = new Qualifier();
 		q1.setStartTime(Instant.parse("2018-01-01T00:00:00Z"));
 		q1.setEndTime(Instant.parse("2018-02-01T00:00:00Z"));
 		q1.setIdentifier(TimeSeriesUtils.ESTIMATED_QUALIFIER_VALUE);
-		DataGap gap1 = new DataGap();
 		TimeSeriesPoint point1A = new TimeSeriesPoint();
 		point1A.setTimestamp(new StatisticalDateTimeOffset().setDateTimeOffset(Instant.parse("2018-01-01T00:00:00Z")).setRepresentsEndOfTimePeriod(false));
 		point1A.setValue(new DoubleWithDisplay().setNumeric(1.0D).setDisplay("1"));
@@ -1541,6 +1539,7 @@ public class UvHydroReportBuilderTest {
 	}
 
 	@Test
+	@SuppressWarnings("unchecked")
 	public void buildDefaultReportTest() {
 		Qualifier q1 = new Qualifier();
 		q1.setStartTime(Instant.parse("2018-01-01T00:00:00Z"));
@@ -1738,6 +1737,7 @@ public class UvHydroReportBuilderTest {
 	}
 
 	@Test
+	@SuppressWarnings("unchecked")
 	public void buildReportTest() {
 		Qualifier q1 = new Qualifier();
 		q1.setStartTime(Instant.parse("2018-01-01T00:00:00Z"));

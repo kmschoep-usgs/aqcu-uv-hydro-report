@@ -4,13 +4,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.Assert.assertEquals;
 
-import java.util.Arrays;
 import java.util.List;
-
-import com.aquaticinformatics.aquarius.sdk.timeseries.servicemodels.Publish.Grade;
-import com.aquaticinformatics.aquarius.sdk.timeseries.servicemodels.Publish.Qualifier;
-
-import org.junit.Before;
 import org.junit.Test;
 
 import org.junit.runner.RunWith;
