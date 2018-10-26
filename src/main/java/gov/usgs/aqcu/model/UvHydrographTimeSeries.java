@@ -1,6 +1,6 @@
 package gov.usgs.aqcu.model;
 
-import java.time.Instant;
+import java.time.temporal.Temporal;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -24,8 +24,8 @@ public class UvHydrographTimeSeries {
     private List<InstantRange> estimatedPeriods;
 
     // Additional Data
-    private Instant startTime;
-    private Instant endTime;
+    private Temporal startTime;
+    private Temporal endTime;
     private String name;
     private String type;
     private String unit;
@@ -36,6 +36,7 @@ public class UvHydrographTimeSeries {
     public UvHydrographTimeSeries(String tsUid) {
         this.name = tsUid;
         points = new ArrayList<>();
+        estimatedPeriods = new ArrayList<>();
     }
 
     public List<UvHydrographPoint> getPoints() {
@@ -70,11 +71,11 @@ public class UvHydrographTimeSeries {
         return interpolationTypes;
     }
 
-    public Instant getStartTime() {
+    public Temporal getStartTime() {
         return startTime;
     }
 
-    public Instant getEndTime() {
+    public Temporal getEndTime() {
         return endTime;
     }
 
@@ -138,11 +139,11 @@ public class UvHydrographTimeSeries {
         this.interpolationTypes = interpolationTypes;
     }
 
-    public void setStartTime(Instant startTime) {
+    public void setStartTime(Temporal startTime) {
         this.startTime = startTime;
     }
 
-    public void setEndTime(Instant endTime) {
+    public void setEndTime(Temporal endTime) {
         this.endTime = endTime;
     }
 

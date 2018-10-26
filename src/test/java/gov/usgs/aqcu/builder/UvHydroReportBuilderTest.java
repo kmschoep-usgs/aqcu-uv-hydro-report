@@ -5,6 +5,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
@@ -32,6 +33,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import gov.usgs.aqcu.exception.AquariusRetrievalException;
 import gov.usgs.aqcu.model.DataGap;
 import gov.usgs.aqcu.model.ExtendedCorrection;
 import gov.usgs.aqcu.model.FieldVisitMeasurement;
@@ -64,6 +66,7 @@ import gov.usgs.aqcu.retrieval.TimeSeriesDataService;
 import gov.usgs.aqcu.retrieval.TimeSeriesDescriptionListService;
 import gov.usgs.aqcu.retrieval.TimeSeriesDescriptionListServiceTest;
 import gov.usgs.aqcu.retrieval.UpchainProcessorListServiceTest;
+import gov.usgs.aqcu.util.AqcuTimeUtils;
 import gov.usgs.aqcu.util.TimeSeriesUtils;
 
 import com.aquaticinformatics.aquarius.sdk.timeseries.servicemodels.Publish.FieldVisitDataServiceResponse;
@@ -486,6 +489,83 @@ public class UvHydroReportBuilderTest {
 
 	@Test
 	@SuppressWarnings("unchecked")
+	public void getTimeSeriesDataNoPointsTest() {
+		UvHydroRequestParameters params = new UvHydroRequestParameters();
+		params.setStartDate(LocalDate.parse("2018-01-01"));
+		params.setEndDate(LocalDate.parse("2018-02-01"));
+		TimeSeriesDescription desc1 = new TimeSeriesDescription();
+		desc1.setParameter("param1");
+		desc1.setUniqueId("test1");
+		desc1.setUtcOffset(0.0D);
+		desc1.setDescription("test1-desc");
+		desc1.setUnit("test1-unit");
+		TimeSeriesDataServiceResponse resp1 = new TimeSeriesDataServiceResponse();
+		resp1.setTimeRange(null);
+		resp1.setApprovals(new ArrayList<>());
+		resp1.setGapTolerances(new ArrayList<>());
+		resp1.setGrades(new ArrayList<>());
+		resp1.setNotes(new ArrayList<>());
+		resp1.setInterpolationTypes(new ArrayList<>());
+		resp1.setQualifiers(new ArrayList<>());
+		resp1.setPoints(new ArrayList<>());
+
+		given(dataService.get(eq("test1"), any(UvHydroRequestParameters.class), any(ZoneOffset.class), eq(false), eq(false), eq(true), eq(null))).willReturn(
+			resp1
+		);
+		given(paramService.isVolumetricFlow(any(Map.class), any(String.class))).willReturn(false);
+
+		UvHydrographTimeSeries result = service.getTimeSeriesData(params, new HashMap<>(), desc1, false, false);
+		assertNull(result.getStartTime());
+		assertNull(result.getEndTime());
+		assertTrue(result.getPoints().isEmpty());
+	}
+
+	@Test
+	@SuppressWarnings("unchecked")
+	public void getTimeSeriesDataNoTimeRangeTest() {
+		UvHydroRequestParameters params = new UvHydroRequestParameters();
+		params.setStartDate(LocalDate.parse("2018-01-01"));
+		params.setEndDate(LocalDate.parse("2018-02-01"));
+		TimeSeriesDescription desc1 = new TimeSeriesDescription();
+		desc1.setParameter("param1");
+		desc1.setUniqueId("test1");
+		desc1.setUtcOffset(0.0D);
+		desc1.setDescription("test1-desc");
+		desc1.setUnit("test1-unit");
+		TimeSeriesPoint point1A = new TimeSeriesPoint();
+		point1A.setTimestamp(new StatisticalDateTimeOffset().setDateTimeOffset(Instant.parse("2018-01-01T00:00:00Z")).setRepresentsEndOfTimePeriod(false));
+		point1A.setValue(new DoubleWithDisplay().setNumeric(1.0D).setDisplay("1"));
+		TimeSeriesPoint point1B = new TimeSeriesPoint();
+		point1B.setTimestamp(new StatisticalDateTimeOffset().setDateTimeOffset(Instant.parse("2018-02-01T00:00:00Z")).setRepresentsEndOfTimePeriod(false));
+		point1B.setValue(new DoubleWithDisplay().setNumeric(null).setDisplay("2"));
+		TimeSeriesDataServiceResponse resp1 = new TimeSeriesDataServiceResponse();
+		resp1.setTimeRange(null);
+		resp1.setApprovals(new ArrayList<>());
+		resp1.setGapTolerances(new ArrayList<>());
+		resp1.setGrades(new ArrayList<>());
+		resp1.setNotes(new ArrayList<>());
+		resp1.setInterpolationTypes(new ArrayList<>());
+		resp1.setQualifiers(new ArrayList<>());
+		resp1.setPoints(new ArrayList<>(Arrays.asList(point1A, point1B)));
+
+		given(dataService.get(eq("test1"), any(UvHydroRequestParameters.class), any(ZoneOffset.class), eq(false), eq(false), eq(true), eq(null))).willReturn(
+			resp1
+		);
+		given(paramService.isVolumetricFlow(any(Map.class), any(String.class))).willReturn(false);
+
+		// Expect error test
+		try {
+			service.getTimeSeriesData(params, new HashMap<>(), desc1, false, false);
+			fail("Expected AquariusRetrievalException when points returned with no time range, but got no exception.");
+		} catch (AquariusRetrievalException e) {
+
+		} catch (Exception e) {
+			fail("Expected AquariusRetrievalException when points returned with no time range, but got " + e.getClass().getName() + ".");
+		}
+	}
+
+	@Test
+	@SuppressWarnings("unchecked")
 	public void getTimeSeriesDataCorrectedTest() {
 		Qualifier q1 = new Qualifier();
 		q1.setStartTime(Instant.parse("2018-01-01T00:00:00Z"));
@@ -571,8 +651,8 @@ public class UvHydroReportBuilderTest {
 		assertEquals(result.getDescription(), desc2.getDescription());
 		assertEquals(result.getType(), desc2.getParameter());
 		assertEquals(result.getUnit(), desc2.getUnit());
-		assertEquals(result.getStartTime(), resp2.getTimeRange().getStartTime().DateTimeOffset);
-		assertEquals(result.getEndTime(), resp2.getTimeRange().getEndTime().DateTimeOffset);
+		assertNull(result.getStartTime());
+		assertNull(result.getEndTime());
 		assertEquals(result.getApprovals(), resp2.getApprovals());
 		assertEquals(result.getGapTolerances(), resp2.getGapTolerances());
 		assertEquals(result.getGrades(), resp2.getGrades());
@@ -652,8 +732,8 @@ public class UvHydroReportBuilderTest {
 		assertEquals(result.getDescription(), desc1.getDescription());
 		assertEquals(result.getType(), desc1.getParameter());
 		assertEquals(result.getUnit(), desc1.getUnit());
-		assertEquals(result.getStartTime(), resp1.getTimeRange().getStartTime().DateTimeOffset);
-		assertEquals(result.getEndTime(), resp1.getTimeRange().getEndTime().DateTimeOffset);
+		assertEquals(result.getStartTime(), AqcuTimeUtils.getTemporal(resp1.getTimeRange().getStartTime(), false, ZoneOffset.UTC));
+		assertEquals(result.getEndTime(), AqcuTimeUtils.getTemporal(resp1.getTimeRange().getEndTime(), false, ZoneOffset.UTC));
 		assertEquals(result.getApprovals(), resp1.getApprovals());
 		assertEquals(result.getGapTolerances(), resp1.getGapTolerances());
 		assertEquals(result.getGrades(), resp1.getGrades());
@@ -663,14 +743,13 @@ public class UvHydroReportBuilderTest {
 		assertEquals(result.getEstimatedPeriods(), new ArrayList<>());
 		assertEquals(result.isVolumetricFlow(), false);
 		assertEquals(result.isInverted(), true);
+
 		result = service.getTimeSeriesData(params, new HashMap<>(), desc2, true, true);
 		assertEquals(result.getGaps().size(), 0);
 		assertEquals(result.getPoints().size(), 0);
 		assertEquals(result.getDescription(), desc2.getDescription());
 		assertEquals(result.getType(), desc2.getParameter());
 		assertEquals(result.getUnit(), desc2.getUnit());
-		assertEquals(result.getStartTime(), resp2.getTimeRange().getStartTime().DateTimeOffset);
-		assertEquals(result.getEndTime(), resp2.getTimeRange().getEndTime().DateTimeOffset);
 		assertEquals(result.getApprovals(), resp2.getApprovals());
 		assertEquals(result.getGapTolerances(), resp2.getGapTolerances());
 		assertEquals(result.getGrades(), resp2.getGrades());
@@ -680,6 +759,8 @@ public class UvHydroReportBuilderTest {
 		assertEquals(result.getEstimatedPeriods().size(), 1);
 		assertEquals(result.isVolumetricFlow(), false);
 		assertEquals(result.isInverted(), false);
+		assertNull(result.getStartTime());
+		assertNull(result.getEndTime());
 	}
 
 	@Test

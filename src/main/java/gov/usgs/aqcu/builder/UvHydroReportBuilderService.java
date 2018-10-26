@@ -25,6 +25,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import gov.usgs.aqcu.exception.AquariusRetrievalException;
 import gov.usgs.aqcu.model.FieldVisitMeasurement;
 import gov.usgs.aqcu.model.UvHydroReport;
 import gov.usgs.aqcu.model.UvHydroReportMetadata;
@@ -55,6 +59,8 @@ import gov.usgs.aqcu.retrieval.TimeSeriesDataService;
 
 @Service
 public class UvHydroReportBuilderService {
+	private static final Logger LOG = LoggerFactory.getLogger(UvHydroReportBuilderService.class);
+
 	public static final String DISCHARGE_PARAMETER = "discharge";
     public static final String GAGE_HEIGHT_PARAMETER = "gage height";
 	public static final String REPORT_TITLE = "UV Hydrograph";
@@ -432,31 +438,52 @@ public class UvHydroReportBuilderService {
 
 			// Time Series Data
 			TimeSeriesDataServiceResponse dataResponse = timeSeriesDataService.get(tsDesc.getUniqueId(), requestParameters, zoneOffset, isDaily, isRaw, true, null);
-			timeSeries.setStartTime(dataResponse.getTimeRange().getStartTime().DateTimeOffset);
-			timeSeries.setEndTime(dataResponse.getTimeRange().getEndTime().DateTimeOffset);
-			timeSeries.setApprovals(dataResponse.getApprovals());
-			timeSeries.setGapTolerances(dataResponse.getGapTolerances());
-			timeSeries.setGrades(dataResponse.getGrades());
-			timeSeries.setNotes(dataResponse.getNotes());
-			timeSeries.setInterpolationTypes(dataResponse.getInterpolationTypes());
-			timeSeries.setQualifiers(dataResponse.getQualifiers());
-			timeSeries.setEstimatedPeriods(TimeSeriesUtils.getEstimatedPeriods(dataResponse.getQualifiers()));
-			timeSeries.isVolumetricFlow(parameterListService.isVolumetricFlow(parameterMetadata, dataResponse.getParameter()));
-			timeSeries.setInverted(gwParam != null && gwParam.isInverted());
+			if(dataResponse != null) {
+				timeSeries.isVolumetricFlow(parameterListService.isVolumetricFlow(parameterMetadata, dataResponse.getParameter()));
+				timeSeries.setInverted(gwParam != null && gwParam.isInverted());
+				timeSeries.setApprovals(dataResponse.getApprovals());
+				timeSeries.setGapTolerances(dataResponse.getGapTolerances());
+				timeSeries.setGrades(dataResponse.getGrades());
+				timeSeries.setNotes(dataResponse.getNotes());
+				timeSeries.setInterpolationTypes(dataResponse.getInterpolationTypes());
+				timeSeries.setQualifiers(dataResponse.getQualifiers());
 
-			// Point Data
-			if(dataResponse.getPoints() != null && !dataResponse.getPoints().isEmpty()) {
-				timeSeries.setPoints(createUvHydroPointsFromTimeSeries(dataResponse.getPoints(), isDaily, zoneOffset));
+				if(timeSeries.getQualifiers() != null && !timeSeries.getQualifiers().isEmpty()) {
+					timeSeries.setEstimatedPeriods(TimeSeriesUtils.getEstimatedPeriods(dataResponse.getQualifiers()));
+				}
+				
+				// Point Data
+				if(dataResponse.getPoints() != null && !dataResponse.getPoints().isEmpty()) {
+					// Time Range (will be null if no points returned)
+					if (dataResponse.getTimeRange() != null) {
+						timeSeries.setStartTime(AqcuTimeUtils.getTemporal(dataResponse.getTimeRange().getStartTime(), isDaily, zoneOffset));
+						timeSeries.setEndTime(AqcuTimeUtils.getTemporal(dataResponse.getTimeRange().getEndTime(), isDaily, zoneOffset));
+					} else {
+						LOG.error("Request for time series data returned points but no time range. Request:" +
+							"\nTime Series Unique ID: " + tsDesc.getUniqueId() +
+							"\nIs Daily: " + isDaily +
+							"\nIs Raw: " + isRaw +
+							"\nStart Date: " + requestParameters.getStartInstant(zoneOffset) + 
+							"\nEnd Date: " + requestParameters.getEndInstant(zoneOffset)
+						);
+						throw new AquariusRetrievalException("Request for time series data returned points but no time range.");
+					}
+					
+					timeSeries.setPoints(createUvHydroPointsFromTimeSeries(dataResponse.getPoints(), isDaily, zoneOffset));
 
-				if(!isRaw) {
-					timeSeries.setGaps(dataGapListBuilderService.buildGapList(dataResponse.getPoints(), isDaily, zoneOffset));
+					if(!isRaw) {
+						timeSeries.setGaps(dataGapListBuilderService.buildGapList(dataResponse.getPoints(), isDaily, zoneOffset));
+					} else {
+						timeSeries.setGaps(new ArrayList<>());
+					}
 				} else {
+					timeSeries.setPoints(new ArrayList<>());
 					timeSeries.setGaps(new ArrayList<>());
 				}
 			} else {
-				timeSeries.setPoints(new ArrayList<>());
-				timeSeries.setGaps(new ArrayList<>());
-			}		
+				LOG.error("Failed to retireve time series data for ID: " + tsDesc.getUniqueId());
+				throw new AquariusRetrievalException("Failed to retireve time series data for ID: " + tsDesc.getUniqueId());
+			}	
 
 			return timeSeries;
 		}
