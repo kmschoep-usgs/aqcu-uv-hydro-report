@@ -7,13 +7,13 @@ server:
     key-password: ${keystorePassword}
     key-alias: ${keystoreSSLKey:tomcat}
 
-aqcu:
-  reports:
-    webservice: ${aqcuReportsWebserviceUrl}
-
 javaToR:
   service:
     endpoint: ${javaToRServiceEndpoint}
+
+nwis-ra:
+  service:
+    endpoint: ${nwisRaServiceEndpoint}
 
 aquarius:
   service:
@@ -22,6 +22,10 @@ aquarius:
     password: ${aquariusServicePassword}
     retries:
       unauthorized: ${aquariusUnauthorizedRetries:3}
+
+sims:
+  base:
+    url: ${simsBaseUrl}
 
 security:
   require-ssl: true
@@ -57,22 +61,20 @@ hystrix:
             timeoutInMilliseconds: ${hystrixThreadTimeout}
   threadpool:
     default:
-      maxQueueSize: ${hystrixMaxQueueSize:800}
-      queueSizeRejectionThreshold: ${hystrixMaxQueueSize:800}
+      maxQueueSize: ${hystrixMaxQueueSize:200}
+      queueSizeRejectionThreshold: ${hystrixMaxQueueSize:200}
       coreSize: ${hystrixThreadPoolSize:5}
 
-asyncRetrieval:
-  corePoolSize: ${asyncRetrievalCorePoolSize:10}
-  maxPoolSize: ${asyncRetrievalMaxPoolSize:-1}
-  queueCapacity: ${asyncRetrievalQueueCapacity:-1}
+zuul:
+  sensitiveHeaders: 
 
 spring:
   profiles:
     active: default, swagger
   application:
-    name: aqcu-tss-report
+    name: aqcu-uv-hydro-report
   jmx:
-    default-domain: aqcu-tss-report
+    default-domain: aqcu-uv-hydro-report
 
 logging:
   level:
