@@ -645,6 +645,7 @@ public class UvHydroReportBuilderTest {
 		assertEquals(result.getEstimatedPeriods(), new ArrayList<>());
 		assertEquals(result.isVolumetricFlow(), false);
 		assertEquals(result.isInverted(), true);
+		
 		result = service.getTimeSeriesData(params, new HashMap<>(), desc2, false, true);
 		assertEquals(result.getGaps().size(), 0);
 		assertEquals(result.getPoints().size(), 0);
