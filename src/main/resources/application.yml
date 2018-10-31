@@ -49,6 +49,9 @@ eureka:
 feign:
   hystrix:
     enabled: true
+  client:
+    javaToR:
+      readTimeout: ${javaToRServiceReadTimeout:5000}
 
 hystrix:
   shareSecurityContext: true
