@@ -42,7 +42,7 @@ public class Controller {
 	public ResponseEntity<?> getReport(@Validated UvHydroRequestParameters requestParameters) throws Exception {
 		String requestingUser = getRequestingUser();
 		UvHydroReport report = reportBuilderService.buildReport(requestParameters, requestingUser);
-		byte[] reportHtml = javaToRClient.render(requestingUser, "uvhydro", gson.toJson(report, UvHydroReport.class));
+		byte[] reportHtml = javaToRClient.render(requestingUser, "uvhydrograph", gson.toJson(report, UvHydroReport.class));
 		return new ResponseEntity<byte[]>(reportHtml, new HttpHeaders(), HttpStatus.OK);
 	}
 	
