@@ -50,8 +50,11 @@ feign:
   hystrix:
     enabled: true
   client:
-    javaToR:
-      readTimeout: ${javaToRServiceReadTimeout:5000}
+    config:
+      javaToR:
+        readTimeout: ${javaToRServiceReadTimeout:10000}
+      nwisRa:
+        readTimeout: ${nwisRaServiceReadTimeout:10000}
 
 hystrix:
   shareSecurityContext: true
