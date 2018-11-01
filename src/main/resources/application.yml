@@ -10,10 +10,14 @@ server:
 javaToR:
   service:
     endpoint: ${javaToRServiceEndpoint}
+  ribbon:
+    ReadTimeout: ${javaToRServiceReadTimeout:10000}
 
 nwis-ra:
   service:
     endpoint: ${nwisRaServiceEndpoint}
+  ribbon:
+    ReadTimeout: ${nwisRaServiceReadTimeout:10000}
 
 aquarius:
   service:
@@ -49,12 +53,6 @@ eureka:
 feign:
   hystrix:
     enabled: true
-  client:
-    config:
-      javaToR:
-        readTimeout: ${javaToRServiceReadTimeout:10000}
-      nwisRa:
-        readTimeout: ${nwisRaServiceReadTimeout:10000}
 
 hystrix:
   shareSecurityContext: true
