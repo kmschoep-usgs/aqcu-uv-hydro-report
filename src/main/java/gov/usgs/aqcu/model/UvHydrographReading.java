@@ -2,7 +2,6 @@ package gov.usgs.aqcu.model;
 
 import java.time.temporal.Temporal;
 
-import com.aquaticinformatics.aquarius.sdk.timeseries.servicemodels.Publish.Reading;
 import com.aquaticinformatics.aquarius.sdk.timeseries.servicemodels.Publish.ReadingType;
 
 public class UvHydrographReading {
@@ -12,17 +11,17 @@ public class UvHydrographReading {
     private String uncertainty;
     private String parameter;
 
-    public UvHydrographReading(Reading source) {
+    public UvHydrographReading(FieldVisitReading source, String parameter) {
         setTime(source.getTime());
         setType(source.getReadingType());
-        setParameter(source.getParameter());
+        setParameter(parameter);
 
         if(source.getUncertainty() != null) {
-            setUncertainty(source.getUncertainty().getDisplay());
+            setUncertainty(source.getUncertainty());
         }
         
         if(source.getValue() != null) {
-            setValue(source.getValue().getDisplay());
+            setValue(source.getValue());
         }
     }
 
