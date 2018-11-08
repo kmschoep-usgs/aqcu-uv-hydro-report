@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -13,6 +14,7 @@ import com.aquaticinformatics.aquarius.sdk.timeseries.servicemodels.Publish.Effe
 import com.aquaticinformatics.aquarius.sdk.timeseries.servicemodels.Publish.FieldVisitDataServiceResponse;
 import com.aquaticinformatics.aquarius.sdk.timeseries.servicemodels.Publish.FieldVisitDescription;
 import com.aquaticinformatics.aquarius.sdk.timeseries.servicemodels.Publish.Grade;
+import com.aquaticinformatics.aquarius.sdk.timeseries.servicemodels.Publish.InspectionType;
 import com.aquaticinformatics.aquarius.sdk.timeseries.servicemodels.Publish.LocationDescription;
 import com.aquaticinformatics.aquarius.sdk.timeseries.servicemodels.Publish.ParameterMetadata;
 import com.aquaticinformatics.aquarius.sdk.timeseries.servicemodels.Publish.Qualifier;
@@ -60,6 +62,9 @@ import gov.usgs.aqcu.retrieval.TimeSeriesDataService;
 @Service
 public class UvHydroReportBuilderService {
 	private static final Logger LOG = LoggerFactory.getLogger(UvHydroReportBuilderService.class);
+	private static final List<String> includeInspections = Arrays.asList(
+		InspectionType.Other.name(), InspectionType.Unknown.name(), InspectionType.BubbleGage.name()
+	);
 
 	public static final String DISCHARGE_PARAMETER = "discharge";
     public static final String GAGE_HEIGHT_PARAMETER = "gage height";
@@ -77,6 +82,8 @@ public class UvHydroReportBuilderService {
 	private EffectiveShiftsService effectiveShiftsService;
 	private FieldVisitDescriptionService fieldVisitDescriptionService;
 	private FieldVisitDataService fieldVisitDataService;
+	private FieldVisitMeasurementsBuilderService fieldVisitMeasurementsBuilderService;
+	private FieldVisitReadingsBuilderService fieldVisitReadingsBuilderService;
 	private ParameterListService parameterListService;
 	private NwisRaService nwisRaService;
 
@@ -96,6 +103,8 @@ public class UvHydroReportBuilderService {
 		EffectiveShiftsService effectiveShiftsService,
 		FieldVisitDescriptionService fieldVisitDescriptionService,
 		FieldVisitDataService fieldVisitDataService,
+		FieldVisitMeasurementsBuilderService fieldVisitMeasurementsBuilderService,
+		FieldVisitReadingsBuilderService fieldVisitReadingsBuilderService,
 		ParameterListService parameterListService,
 		NwisRaService nwisRaService) {
 		this.locationDescriptionListService = locationDescriptionListService;
@@ -109,6 +118,8 @@ public class UvHydroReportBuilderService {
 		this.effectiveShiftsService = effectiveShiftsService;
 		this.fieldVisitDescriptionService = fieldVisitDescriptionService;
 		this.fieldVisitDataService = fieldVisitDataService;
+		this.fieldVisitMeasurementsBuilderService = fieldVisitMeasurementsBuilderService;
+		this.fieldVisitReadingsBuilderService = fieldVisitReadingsBuilderService;
 		this.parameterListService = parameterListService;
 		this.nwisRaService = nwisRaService;
 	}
@@ -563,8 +574,8 @@ public class UvHydroReportBuilderService {
 		List<UvHydrographReading> result = new ArrayList<>();
 
 		for(FieldVisitDataServiceResponse response : fieldVisitData) {
-			result.addAll(fieldVisitDataService.extractFieldVisitReadings(response, parameter).stream()
-				.map(reading -> new UvHydrographReading(reading))
+			result.addAll(fieldVisitReadingsBuilderService.extractReadings(null, response, parameter, includeInspections).stream()
+				.map(reading -> new UvHydrographReading(reading, parameter))
 				.collect(Collectors.toList()));
 		}
 
@@ -574,7 +585,7 @@ public class UvHydroReportBuilderService {
 	protected List<FieldVisitMeasurement> getFieldVisitMeasurements(List<FieldVisitDataServiceResponse> fieldVisitData, String ratingModelIdentifier) {
 		List<FieldVisitMeasurement> result = new ArrayList<>();
 		for(FieldVisitDataServiceResponse response : fieldVisitData) {
-			result.addAll(fieldVisitDataService.extractFieldVisitMeasurements(response, ratingModelIdentifier));
+			result.addAll(fieldVisitMeasurementsBuilderService.extractFieldVisitMeasurements(response, ratingModelIdentifier));
 		}
 		return result;
 	}

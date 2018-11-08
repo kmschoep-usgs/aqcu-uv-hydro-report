@@ -37,6 +37,7 @@ import gov.usgs.aqcu.exception.AquariusRetrievalException;
 import gov.usgs.aqcu.model.DataGap;
 import gov.usgs.aqcu.model.ExtendedCorrection;
 import gov.usgs.aqcu.model.FieldVisitMeasurement;
+import gov.usgs.aqcu.model.FieldVisitReading;
 import gov.usgs.aqcu.model.UvHydroReport;
 import gov.usgs.aqcu.model.UvHydroReportMetadata;
 import gov.usgs.aqcu.model.UvHydrographEffectiveShifts;
@@ -118,6 +119,10 @@ public class UvHydroReportBuilderTest {
 	@MockBean
 	private FieldVisitDataService fieldVisitDataService;
 	@MockBean
+	private FieldVisitMeasurementsBuilderService fieldVisitMeasurementsBuilderService;
+	@MockBean
+	private FieldVisitReadingsBuilderService fieldVisitReadingsBuilderService;
+	@MockBean
 	private ParameterListService paramService;
 	@MockBean
 	private NwisRaService nwisraService;
@@ -135,7 +140,7 @@ public class UvHydroReportBuilderTest {
 	@Before
 	public void setup() {
 		// Builder Servies
-		service = new UvHydroReportBuilderService(locationService,descService,dataService,gapsService,corrService,gradeService,qualService,curvesService,effectiveService,fieldVisitDescriptionService,fieldVisitDataService,paramService,nwisraService);
+		service = new UvHydroReportBuilderService(locationService,descService,dataService,gapsService,corrService,gradeService,qualService,curvesService,effectiveService,fieldVisitDescriptionService,fieldVisitDataService,fieldVisitMeasurementsBuilderService,fieldVisitReadingsBuilderService,paramService,nwisraService);
 		
 		// Mock Returns
 		given(locationService.getByLocationIdentifier(any(String.class))).willReturn(primaryLoc);
@@ -253,7 +258,7 @@ public class UvHydroReportBuilderTest {
 		meas2.setDischarge(BigDecimal.valueOf(2.0D));
 		meas2.setMeasurementNumber("2");
 
-		given(fieldVisitDataService.extractFieldVisitMeasurements(any(FieldVisitDataServiceResponse.class), any(String.class))).willReturn(
+		given(fieldVisitMeasurementsBuilderService.extractFieldVisitMeasurements(any(FieldVisitDataServiceResponse.class), any(String.class))).willReturn(
 			Arrays.asList(meas1,meas2)
 		);
 
@@ -277,6 +282,7 @@ public class UvHydroReportBuilderTest {
 	}
 
 	@Test
+	@SuppressWarnings("unchecked")
 	public void getFilteredFieldVisitReadingsTest() {
 		Reading read1 = new Reading();
 		read1.setIsValid(true);
@@ -284,15 +290,17 @@ public class UvHydroReportBuilderTest {
 		Reading read2 = new Reading();
 		read2.setIsValid(false);
 		read2.setParameter("param2");
+		FieldVisitReading fRead1 = new FieldVisitReading(null, "party1", "TODO", Arrays.asList(), read1);
+		FieldVisitReading fRead2 = new FieldVisitReading(null, "party2", "TODO", Arrays.asList(), read2);
 
-		given(fieldVisitDataService.extractFieldVisitReadings(any(FieldVisitDataServiceResponse.class), eq("param1"))).willReturn(
-			Arrays.asList(read1)
+		given(fieldVisitReadingsBuilderService.extractReadings(eq(null), any(FieldVisitDataServiceResponse.class), eq("param1"), any(List.class))).willReturn(
+			Arrays.asList(fRead1)
 		);
-		given(fieldVisitDataService.extractFieldVisitReadings(any(FieldVisitDataServiceResponse.class), eq("param2"))).willReturn(
-			Arrays.asList(read2)
+		given(fieldVisitReadingsBuilderService.extractReadings(eq(null), any(FieldVisitDataServiceResponse.class), eq("param2"), any(List.class))).willReturn(
+			Arrays.asList(fRead2)
 		);
-		given(fieldVisitDataService.extractFieldVisitReadings(any(FieldVisitDataServiceResponse.class), eq("invalid"))).willReturn(
-			new ArrayList<>()
+		given(fieldVisitReadingsBuilderService.extractReadings(eq(null), any(FieldVisitDataServiceResponse.class), eq("invalid"), any(List.class))).willReturn(
+			new ArrayList<FieldVisitReading>()
 		);
 
 		List<UvHydrographReading> result = service.getFilteredFieldVisitReadings(Arrays.asList(new FieldVisitDataServiceResponse()), "param1");
@@ -841,10 +849,10 @@ public class UvHydroReportBuilderTest {
 		given(fieldVisitDataService.get(any(String.class))).willReturn(
 			new FieldVisitDataServiceResponse()
 		);
-		given(fieldVisitDataService.extractFieldVisitMeasurements(any(FieldVisitDataServiceResponse.class), any(String.class))).willReturn(
+		given(fieldVisitMeasurementsBuilderService.extractFieldVisitMeasurements(any(FieldVisitDataServiceResponse.class), any(String.class))).willReturn(
 			new ArrayList<>()
 		);
-		given(fieldVisitDataService.extractFieldVisitReadings(any(FieldVisitDataServiceResponse.class), any(String.class))).willReturn(
+		given(fieldVisitReadingsBuilderService.extractReadings(eq(null), any(FieldVisitDataServiceResponse.class), any(String.class), any(List.class))).willReturn(
 			new ArrayList<>()
 		);
 
@@ -1075,10 +1083,10 @@ public class UvHydroReportBuilderTest {
 		given(fieldVisitDataService.get(any(String.class))).willReturn(
 			new FieldVisitDataServiceResponse()
 		);
-		given(fieldVisitDataService.extractFieldVisitMeasurements(any(FieldVisitDataServiceResponse.class), any(String.class))).willReturn(
+		given(fieldVisitMeasurementsBuilderService.extractFieldVisitMeasurements(any(FieldVisitDataServiceResponse.class), any(String.class))).willReturn(
 			new ArrayList<>()
 		);
-		given(fieldVisitDataService.extractFieldVisitReadings(any(FieldVisitDataServiceResponse.class), any(String.class))).willReturn(
+		given(fieldVisitReadingsBuilderService.extractReadings(eq(null), any(FieldVisitDataServiceResponse.class), any(String.class), any(List.class))).willReturn(
 			new ArrayList<>()
 		);
 		given(corrService.getExtendedCorrectionList(any(String.class), any(Instant.class), any(Instant.class), any(List.class))).willReturn(
@@ -1308,10 +1316,10 @@ public class UvHydroReportBuilderTest {
 		given(fieldVisitDataService.get(any(String.class))).willReturn(
 			new FieldVisitDataServiceResponse()
 		);
-		given(fieldVisitDataService.extractFieldVisitMeasurements(any(FieldVisitDataServiceResponse.class), any(String.class))).willReturn(
+		given(fieldVisitMeasurementsBuilderService.extractFieldVisitMeasurements(any(FieldVisitDataServiceResponse.class), any(String.class))).willReturn(
 			new ArrayList<>()
 		);
-		given(fieldVisitDataService.extractFieldVisitReadings(any(FieldVisitDataServiceResponse.class), any(String.class))).willReturn(
+		given(fieldVisitReadingsBuilderService.extractReadings(eq(null), any(FieldVisitDataServiceResponse.class), any(String.class), any(List.class))).willReturn(
 			new ArrayList<>()
 		);
 		given(corrService.getExtendedCorrectionList(any(String.class), any(Instant.class), any(Instant.class), any(List.class))).willReturn(
@@ -1504,10 +1512,10 @@ public class UvHydroReportBuilderTest {
 		given(fieldVisitDataService.get(any(String.class))).willReturn(
 			new FieldVisitDataServiceResponse()
 		);
-		given(fieldVisitDataService.extractFieldVisitMeasurements(any(FieldVisitDataServiceResponse.class), any(String.class))).willReturn(
+		given(fieldVisitMeasurementsBuilderService.extractFieldVisitMeasurements(any(FieldVisitDataServiceResponse.class), any(String.class))).willReturn(
 			new ArrayList<>()
 		);
-		given(fieldVisitDataService.extractFieldVisitReadings(any(FieldVisitDataServiceResponse.class), any(String.class))).willReturn(
+		given(fieldVisitReadingsBuilderService.extractReadings(eq(null), any(FieldVisitDataServiceResponse.class), any(String.class), any(List.class))).willReturn(
 			new ArrayList<>()
 		);
 		given(corrService.getExtendedCorrectionList(any(String.class), any(Instant.class), any(Instant.class), any(List.class))).willReturn(
@@ -1697,10 +1705,10 @@ public class UvHydroReportBuilderTest {
 		given(fieldVisitDataService.get(any(String.class))).willReturn(
 			new FieldVisitDataServiceResponse()
 		);
-		given(fieldVisitDataService.extractFieldVisitMeasurements(any(FieldVisitDataServiceResponse.class), any(String.class))).willReturn(
+		given(fieldVisitMeasurementsBuilderService.extractFieldVisitMeasurements(any(FieldVisitDataServiceResponse.class), any(String.class))).willReturn(
 			new ArrayList<>()
 		);
-		given(fieldVisitDataService.extractFieldVisitReadings(any(FieldVisitDataServiceResponse.class), any(String.class))).willReturn(
+		given(fieldVisitReadingsBuilderService.extractReadings(eq(null), any(FieldVisitDataServiceResponse.class), any(String.class), any(List.class))).willReturn(
 			new ArrayList<>()
 		);
 
@@ -1926,10 +1934,10 @@ public class UvHydroReportBuilderTest {
 		given(fieldVisitDataService.get(any(String.class))).willReturn(
 			new FieldVisitDataServiceResponse()
 		);
-		given(fieldVisitDataService.extractFieldVisitMeasurements(any(FieldVisitDataServiceResponse.class), any(String.class))).willReturn(
+		given(fieldVisitMeasurementsBuilderService.extractFieldVisitMeasurements(any(FieldVisitDataServiceResponse.class), any(String.class))).willReturn(
 			new ArrayList<>()
 		);
-		given(fieldVisitDataService.extractFieldVisitReadings(any(FieldVisitDataServiceResponse.class), any(String.class))).willReturn(
+		given(fieldVisitReadingsBuilderService.extractReadings(eq(null), any(FieldVisitDataServiceResponse.class), any(String.class), any(List.class))).willReturn(
 			new ArrayList<>()
 		);
 		given(qualService.getByQualifierList(any(List.class))).willReturn(
