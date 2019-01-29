@@ -23,6 +23,7 @@ aquarius:
     password: ${aquariusServicePassword}
     retries:
       unauthorized: ${aquariusUnauthorizedRetries:3}
+    timeout: 30000
 
 sims:
   base:
