@@ -269,7 +269,7 @@ public class UvHydroReportBuilderService {
 		ZoneOffset primaryZoneOffset = TimeSeriesUtils.getZoneOffset(tsMetadata.get(requestParameters.getPrimaryTimeseriesIdentifier()));
 
 		// Primary Field Visit Data
-		LOG.debug("Retreive field visit data");
+		LOG.debug("Retrieve field visit data");
 		List<FieldVisitDataServiceResponse> primaryFieldVisitData = null;
 		if(requestParameters.getPrimaryRatingModelIdentifier() != null && !requestParameters.getPrimaryRatingModelIdentifier().isEmpty()) {
 			primaryFieldVisitData = getFieldVisitData(
@@ -290,7 +290,7 @@ public class UvHydroReportBuilderService {
 		ZoneOffset primaryZoneOffset = TimeSeriesUtils.getZoneOffset(tsMetadata.get(requestParameters.getPrimaryTimeseriesIdentifier()));
 		
 		// Primary Field Visit Data
-		LOG.debug("Retreive field visit data");
+		LOG.debug("Retrieve field visit data");
 		List<FieldVisitDataServiceResponse> primaryFieldVisitData = null;
 		primaryFieldVisitData = getFieldVisitData(
 			requestParameters,
@@ -302,7 +302,7 @@ public class UvHydroReportBuilderService {
 		UvHydroReport report = buildBaseReport(requestParameters, parameterMetadata, tsMetadata, primaryFieldVisitData, UvHydrographType.SW, requestingUser);
 
 		// Primary Corrections
-		LOG.debug("Retreive primary series corrections");
+		LOG.debug("Retrieve primary series corrections");
 		report.setPrimarySeriesCorrections(correctionListService.getExtendedCorrectionList(
 			requestParameters.getPrimaryTimeseriesIdentifier(), 
 			requestParameters.getStartInstant(primaryZoneOffset), 
@@ -311,7 +311,7 @@ public class UvHydroReportBuilderService {
 		));
 
 		// Field Visit Measurements
-		LOG.debug("Retreive field visit measurements");
+		LOG.debug("Retrieve field visit measurements");
 		if(requestParameters.getPrimaryRatingModelIdentifier() != null && !requestParameters.getPrimaryRatingModelIdentifier().isEmpty()) {
 			report.setFieldVisitMeasurements(getFieldVisitMeasurements(primaryFieldVisitData, requestParameters.getPrimaryRatingModelIdentifier()));
 		} else if(requestParameters.getReferenceRatingModelIdentifier() != null && !requestParameters.getReferenceRatingModelIdentifier().isEmpty()) {
@@ -330,7 +330,7 @@ public class UvHydroReportBuilderService {
 			TimeSeriesDescription upchainMetadata = tsMetadata.get(requestParameters.getUpchainTimeseriesIdentifier());
 			
 			// Data
-			LOG.debug("Retreive upchain time series data (raw and corrected)");
+			LOG.debug("Retrieve upchain time series data (raw and corrected)");
 			report.setUpchainSeries(getTimeSeriesData(requestParameters, parameterMetadata, upchainMetadata, false, false));
 			report.setUpchainSeriesRaw(getTimeSeriesData(requestParameters, parameterMetadata, upchainMetadata, true, false));
 
@@ -338,7 +338,7 @@ public class UvHydroReportBuilderService {
 			report.getReportMetadata().setUpchainParameter(upchainMetadata.getIdentifier());
 
 			// Corrections
-			LOG.debug("Retreive upchain series corrections");
+			LOG.debug("Retrieve upchain series corrections");
 			ZoneOffset upchainZoneOffset = TimeSeriesUtils.getZoneOffset(upchainMetadata);
 			report.setUpchainSeriesCorrections(correctionListService.getExtendedCorrectionList(
 				requestParameters.getUpchainTimeseriesIdentifier(), 
@@ -348,7 +348,7 @@ public class UvHydroReportBuilderService {
 			));
 
 			// Effective Shits
-			LOG.debug("Retreive effective shifts for the upchain series and primary rating model");
+			LOG.debug("Retrieve effective shifts for the upchain series and primary rating model");
 			if(requestParameters.getPrimaryRatingModelIdentifier() != null && !requestParameters.getPrimaryRatingModelIdentifier().isEmpty()) {
 				report.setEffectiveShifts(getEffectiveShifts(requestParameters, 
 					requestParameters.getUpchainTimeseriesIdentifier(), 
@@ -359,7 +359,7 @@ public class UvHydroReportBuilderService {
 			}
 
 			// Readings
-			LOG.debug("Retreive filtered upchain field visit readings");
+			LOG.debug("Retrieve filtered upchain field visit readings");
 			report.setUpchainReadings(getFilteredFieldVisitReadings(primaryFieldVisitData, upchainMetadata.getParameter()));
 		}
 
@@ -373,7 +373,7 @@ public class UvHydroReportBuilderService {
 		ZoneOffset primaryZoneOffset = TimeSeriesUtils.getZoneOffset(tsMetadata.get(requestParameters.getPrimaryTimeseriesIdentifier()));
 		
 		// Primary Field Visit Data
-		LOG.debug("Retreive field visit data");
+		LOG.debug("Retrieve field visit data");
 		List<FieldVisitDataServiceResponse> primaryFieldVisitData = null;
 		primaryFieldVisitData = getFieldVisitData(
 			requestParameters,
@@ -385,7 +385,7 @@ public class UvHydroReportBuilderService {
 		UvHydroReport report = buildBaseReport(requestParameters, parameterMetadata, tsMetadata, primaryFieldVisitData, UvHydrographType.GW, requestingUser);
 
 		// Primary Corrections
-		LOG.debug("Retreive primary series corrections");
+		LOG.debug("Retrieve primary series corrections");
 		report.setPrimarySeriesCorrections(correctionListService.getExtendedCorrectionList(
 			requestParameters.getPrimaryTimeseriesIdentifier(), 
 			requestParameters.getStartInstant(primaryZoneOffset), 
@@ -395,7 +395,7 @@ public class UvHydroReportBuilderService {
 
 		// GW Levels
 		if(!requestParameters.isExcludeDiscrete()) {
-			LOG.debug("Retreive Ground Water Levels data from NWIS-RA");
+			LOG.debug("Retrieve Ground Water Levels data from NWIS-RA");
 			report.setGwlevel(nwisRaService.getGwLevels(
 				requestParameters,
 				tsMetadata.get(requestParameters.getPrimaryTimeseriesIdentifier()).getLocationIdentifier(), 
@@ -414,7 +414,7 @@ public class UvHydroReportBuilderService {
 		ZoneOffset primaryZoneOffset = TimeSeriesUtils.getZoneOffset(tsMetadata.get(requestParameters.getPrimaryTimeseriesIdentifier()));
 		
 		// Primary Field Visit Data
-		LOG.debug("Retreive field visit data");
+		LOG.debug("Retrieve field visit data");
 		List<FieldVisitDataServiceResponse> primaryFieldVisitData = null;
 		primaryFieldVisitData = getFieldVisitData(
 			requestParameters,
@@ -426,7 +426,7 @@ public class UvHydroReportBuilderService {
 		UvHydroReport report = buildBaseReport(requestParameters, parameterMetadata, tsMetadata, primaryFieldVisitData, UvHydrographType.QW, requestingUser);
 
 		// Primary Corrections
-		LOG.debug("Retreive primary series corrections");
+		LOG.debug("Retrieve primary series corrections");
 		report.setPrimarySeriesCorrections(correctionListService.getExtendedCorrectionList(
 			requestParameters.getPrimaryTimeseriesIdentifier(), 
 			requestParameters.getStartInstant(primaryZoneOffset), 
@@ -435,7 +435,7 @@ public class UvHydroReportBuilderService {
 		));
 
 		// Effective Shits
-		LOG.debug("Retreive effective shifts for the refernce series if it exists or the primary series otherwise.");
+		LOG.debug("Retrieve effective shifts for the refernce series if it exists or the primary series otherwise.");
 		if(requestParameters.getReferenceRatingModelIdentifier() != null && !requestParameters.getReferenceTimeseriesIdentifier().isEmpty()) {
 			report.setEffectiveShifts(getEffectiveShifts(requestParameters, 
 				requestParameters.getReferenceTimeseriesIdentifier(), 
@@ -454,7 +454,7 @@ public class UvHydroReportBuilderService {
 
 		// QW Data
 		if(!requestParameters.isExcludeDiscrete()) {
-			LOG.debug("Retreive Water Quality Data from NWIS-RA");
+			LOG.debug("Retrieve Water Quality Data from NWIS-RA");
 			report.setWaterQuality(nwisRaService.getQwData(
 				requestParameters,
 				tsMetadata.get(requestParameters.getPrimaryTimeseriesIdentifier()).getLocationIdentifier(), 
