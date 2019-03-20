@@ -90,4 +90,5 @@ spring:
 
 logging:
   level:
-    gov.usgs.aqcu: INFO
+    org:
+      springframework: ${aqcu_springFrameworkLogLevel}
