@@ -87,7 +87,8 @@ spring:
     name: aqcu-uv-hydro-report
   jmx:
     default-domain: aqcu-uv-hydro-report
-
+  
 logging:
   level:
-    gov.usgs.aqcu: INFO
+    org:
+      springframework: ${aqcu_springFrameworkLogLevel}
