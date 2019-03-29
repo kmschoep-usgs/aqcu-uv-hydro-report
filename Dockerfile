@@ -31,7 +31,7 @@ ENV oauthResourceId=resource-id
 ENV oauthResourceTokenKeyUri=https://example.gov/oauth/token_key
 ENV HEALTHY_RESPONSE_CONTAINS='{"status":{"code":"UP","description":""}'
 
-RUN ./pull-from-artifactory.sh aqcu-maven-centralized gov.usgs.aqcu aqcu-uv-hydro-report ${artifact_version} app.jar
+COPY --chown=1000:1000 --from=build /build/target/*.jar app.jar
 
 HEALTHCHECK --interval=30s --timeout=3s \
   CMD curl -k "https://127.0.0.1:${serverPort}${serverContextPath}${HEALTH_CHECK_ENDPOINT}" | grep -q ${HEALTHY_RESPONSE_CONTAINS} || exit 1
