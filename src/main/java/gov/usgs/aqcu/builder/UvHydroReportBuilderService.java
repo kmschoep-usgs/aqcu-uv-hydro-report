@@ -628,16 +628,12 @@ public class UvHydroReportBuilderService {
 		UvHydroReportMetadata metadata = new UvHydroReportMetadata();
 		metadata.setTitle(REPORT_TITLE);
 		metadata.setRequestingUser(requestingUser);
+		metadata.setRequestParameters(requestParameters);
 		metadata.setPrimaryParameter(primaryParameter);
 		metadata.setStationName(stationName);
 		metadata.setStationId(stationId);
 		metadata.setComparisonStationId(comparisonStationId);
 		metadata.setTimezone(utcOffset);
-		metadata.setStartDate(requestParameters.getStartInstant(ZoneOffset.UTC));
-		metadata.setEndDate(requestParameters.getEndInstant(ZoneOffset.UTC));
-		metadata.setExcludeCorrections(String.join(",", requestParameters.getExcludedCorrections()));
-		metadata.setExcludeDiscrete(requestParameters.isExcludeDiscrete());
-		metadata.setExcludeZeroNegative(requestParameters.isExcludeZeroNegative());
 		metadata.setUvType(type);
 		
 		return metadata;

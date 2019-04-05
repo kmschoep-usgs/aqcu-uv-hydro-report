@@ -1,11 +1,15 @@
 package gov.usgs.aqcu.model;
 
+import java.time.ZoneOffset;
 import java.util.HashMap;
 import java.util.Map;
 
 import com.aquaticinformatics.aquarius.sdk.timeseries.servicemodels.Publish.GradeMetadata;
 
+import gov.usgs.aqcu.parameter.UvHydroRequestParameters;
+
 public class UvHydroReportMetadata extends ReportMetadata {
+	private UvHydroRequestParameters requestParameters;
 	private String primaryParameter;
 	private String upchainParameter;
 	private String referenceParameter;
@@ -16,9 +20,6 @@ public class UvHydroReportMetadata extends ReportMetadata {
 	private String fourthStatDerviedLabel;
 	private String comparisonStationId;
 	private String requestingUser;
-	private String excludeCorrections;
-	private Boolean excludeZeroNegative;
-	private Boolean excludeDiscrete;
 	private Map<String, GradeMetadata> gradeMetadata;
 	private UvHydrographType uvType;
 
@@ -62,17 +63,9 @@ public class UvHydroReportMetadata extends ReportMetadata {
 	public String getComparisonStationId() {
 		return comparisonStationId;
 	}
-
-	public String getExcludeCorrections() {
-		return excludeCorrections;
-	}
-
-	public Boolean getExcludeDiscrete() {
-		return excludeDiscrete;
-	}
-
-	public Boolean getExcludeZeroNegative() {
-		return excludeZeroNegative;
+	
+	public UvHydroRequestParameters getRequestParameters() {
+		return requestParameters;
 	}
 
 	public String getRequestingUser() {
@@ -131,16 +124,11 @@ public class UvHydroReportMetadata extends ReportMetadata {
 		this.comparisonStationId = comparisonStationId;
 	}
 
-	public void setExcludeCorrections(String excludeCorrections) {
-		this.excludeCorrections = excludeCorrections;
-	}
-
-	public void setExcludeDiscrete(Boolean excludeDiscrete) {
-		this.excludeDiscrete = excludeDiscrete;
-	}
-
-	public void setExcludeZeroNegative(Boolean excludeZeroNegative) {
-		this.excludeZeroNegative = excludeZeroNegative;
+	public void setRequestParameters(UvHydroRequestParameters val) {
+		requestParameters = val;
+		//Report Period displayed should be exactly as received, so get as UTC
+		setStartDate(val.getStartInstant(ZoneOffset.UTC));
+		setEndDate(val.getEndInstant(ZoneOffset.UTC));
 	}
 
 	public void setUvType(UvHydrographType uvType) {

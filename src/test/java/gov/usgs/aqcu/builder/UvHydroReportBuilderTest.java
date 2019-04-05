@@ -203,9 +203,9 @@ public class UvHydroReportBuilderTest {
 		assertEquals("Etc/GMT+0", metadata.getTimezone());
 		assertEquals(Instant.parse("2018-01-01T00:00:00Z"), metadata.getStartDate());
 		assertEquals(Instant.parse("2018-02-01T23:59:59.999999999Z"), metadata.getEndDate());
-		assertEquals("corr1,corr2", metadata.getExcludeCorrections());
-		assertEquals(true, metadata.getExcludeDiscrete());
-		assertEquals(true, metadata.getExcludeZeroNegative());
+		assertEquals(Arrays.asList("corr1","corr2"), metadata.getRequestParameters().getExcludedCorrections());
+		assertEquals(true, metadata.getRequestParameters().isExcludeDiscrete());
+		assertEquals(true, metadata.getRequestParameters().isExcludeZeroNegative());
 		assertEquals(UvHydrographType.GW, metadata.getUvType());
 
 		params.setStartDate(LocalDate.parse("2018-01-01"));
@@ -223,9 +223,9 @@ public class UvHydroReportBuilderTest {
 		assertEquals("Etc/GMT-2", metadata.getTimezone());
 		assertEquals(Instant.parse("2018-01-01T00:00:00Z"), metadata.getStartDate());
 		assertEquals(Instant.parse("2018-02-01T23:59:59.999999999Z"), metadata.getEndDate());
-		assertEquals("corr1", metadata.getExcludeCorrections());
-		assertEquals(false, metadata.getExcludeDiscrete());
-		assertEquals(false, metadata.getExcludeZeroNegative());
+		assertEquals(Arrays.asList("corr1"), metadata.getRequestParameters().getExcludedCorrections());
+		assertEquals(false, metadata.getRequestParameters().isExcludeDiscrete());
+		assertEquals(false, metadata.getRequestParameters().isExcludeZeroNegative());
 		assertEquals(UvHydrographType.SW, metadata.getUvType());
 
 		params.setStartDate(LocalDate.parse("2018-01-01"));
@@ -243,9 +243,9 @@ public class UvHydroReportBuilderTest {
 		assertEquals("Etc/GMT-3", metadata.getTimezone());
 		assertEquals(Instant.parse("2018-01-01T00:00:00Z"), metadata.getStartDate());
 		assertEquals(Instant.parse("2018-02-01T23:59:59.999999999Z"), metadata.getEndDate());
-		assertEquals("", metadata.getExcludeCorrections());
-		assertEquals(false, metadata.getExcludeDiscrete());
-		assertEquals(true, metadata.getExcludeZeroNegative());
+		assertEquals(new ArrayList<>(), metadata.getRequestParameters().getExcludedCorrections());
+		assertEquals(false, metadata.getRequestParameters().isExcludeDiscrete());
+		assertEquals(true, metadata.getRequestParameters().isExcludeZeroNegative());
 		assertEquals(UvHydrographType.DEFAULT, metadata.getUvType());
 	}
 
