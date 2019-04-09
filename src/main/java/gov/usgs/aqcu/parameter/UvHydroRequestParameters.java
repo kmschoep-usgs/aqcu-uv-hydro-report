@@ -90,8 +90,18 @@ public class UvHydroRequestParameters extends ReportRequestParameters {
 	public List<String> getExcludedCorrections() {
 		return excludedCorrections;
 	}
-	public void setExcludedCorrections(List<String> excludedCorrections) {
-		this.excludedCorrections = excludedCorrections;
+	public void setExcludedCorrections(List<String> val) {
+		this.excludedCorrections = val != null ? val : new ArrayList<>();
+	}
+	@Override 
+	public String getAsQueryString(String overrideIdentifier, boolean absoluteTime) {
+		String queryString = super.getAsQueryString(overrideIdentifier, absoluteTime);
+
+		if(getExcludedCorrections().size() > 0) {
+			queryString += "&excludedCorrections=" + String.join(",", excludedCorrections);
+		}
+
+		return queryString;
 	}
 	public List<String> getTsUidList() {
 		List<String> tsUidList = new ArrayList<>();

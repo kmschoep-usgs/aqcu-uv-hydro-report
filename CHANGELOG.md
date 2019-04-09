@@ -13,7 +13,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Changed
 - update to aqcu-framework version 0.0.6-SNAPSHOT
-
+- move report request parameters to the requestParameters section of reportMetadata
+- change name of excludeCorrections to excludedCorrections, make it an Array
 
 ## [0.0.1] - 2018-04-20
 ### Added
