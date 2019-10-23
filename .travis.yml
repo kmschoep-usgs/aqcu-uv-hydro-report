@@ -11,8 +11,13 @@
     include:
       - name: jacoco
         language: java
+        install:
+          # intentional no-op
+          - true
         script:
-          - mvn clean verify jacoco:report coveralls:report
+          # the -D option supresses INFO-level logs about dependency downloads. This enables the build to finish within Travis' log length limit.
+          # skip dependency security check to promote stability
+          - mvn -B -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn clean verify jacoco:report coveralls:report -P\!dependency-security-check
       - name: docker_build
         language: bash
         services: docker
