@@ -391,7 +391,7 @@ public class UvHydroReportBuilderTest {
 		curve2.setId("2");
 		curve2.setShifts(new ArrayList<>(Arrays.asList(c2s1,c2s2)));
 
-		given(curvesService.getRawResponse(any(String.class), any(Double.class), any(Instant.class), any(Instant.class))).willReturn(
+		given(curvesService.getRawResponse(any(String.class), eq(null), eq(null), eq(null))).willReturn(
 			new RatingCurveListServiceResponse().setRatingCurves(Arrays.asList(curve1,curve2))
 		);
 		given(curvesService.getAqcuFilteredRatingCurves(any(List.class), any(Instant.class), any(Instant.class))).willReturn(
@@ -840,7 +840,7 @@ public class UvHydroReportBuilderTest {
 		given(locationService.getByLocationIdentifier(any(String.class))).willReturn(primaryLoc);
 		given(curvesService.getAqcuFilteredRatingCurves(any(List.class), any(Instant.class), any(Instant.class))).willReturn(new ArrayList<>());
 		given(curvesService.getAqcuFilteredRatingShifts(any(List.class), any(Instant.class), any(Instant.class))).willReturn(new ArrayList<>());
-		given(curvesService.getRawResponse(any(String.class), any(Double.class), any(Instant.class), any(Instant.class))).willReturn(
+		given(curvesService.getRawResponse(any(String.class), eq(null), eq(null), eq(null))).willReturn(
 			new RatingCurveListServiceResponse().setRatingCurves(new ArrayList<>())
 		);
 		given(fieldVisitDescriptionService.getDescriptions(any(String.class), any(ZoneOffset.class), any(UvHydroRequestParameters.class))).willReturn(
@@ -979,8 +979,8 @@ public class UvHydroReportBuilderTest {
 
 		result = service.buildBaseReport(params, new HashMap<>(), tsMetadata, new ArrayList<>(), UvHydrographType.GW, REQUESTING_USER);
 		assertNotNull(result.getRatingShifts());
-		verify(curvesService).getRawResponse(eq("primary-rating-1"), any(Double.class), any(Instant.class), any(Instant.class));
-		verify(curvesService, never()).getRawResponse(eq("ref-rating-1"), any(Double.class), any(Instant.class), any(Instant.class));
+		verify(curvesService).getRawResponse(eq("primary-rating-1"), eq(null), eq(null), eq(null));
+		verify(curvesService, never()).getRawResponse(eq("ref-rating-1"), eq(null), eq(null), eq(null));
 
 		params = new UvHydroRequestParameters();
 		params.setStartDate(LocalDate.parse("2018-01-01"));
@@ -991,7 +991,7 @@ public class UvHydroReportBuilderTest {
 
 		result = service.buildBaseReport(params, new HashMap<>(), tsMetadata, new ArrayList<>(), UvHydrographType.GW, REQUESTING_USER);
 		assertNotNull(result.getRatingShifts());
-		verify(curvesService).getRawResponse(eq("primary-rating-2"), any(Double.class), any(Instant.class), any(Instant.class));
+		verify(curvesService).getRawResponse(eq("primary-rating-2"), eq(null), eq(null), eq(null));
 
 		params = new UvHydroRequestParameters();
 		params.setStartDate(LocalDate.parse("2018-01-01"));
@@ -1002,7 +1002,7 @@ public class UvHydroReportBuilderTest {
 
 		result = service.buildBaseReport(params, new HashMap<>(), tsMetadata, new ArrayList<>(), UvHydrographType.GW, REQUESTING_USER);
 		assertNotNull(result.getRatingShifts());
-		verify(curvesService).getRawResponse(eq("ref-rating-2"), any(Double.class), any(Instant.class), any(Instant.class));
+		verify(curvesService).getRawResponse(eq("ref-rating-2"), eq(null), eq(null), eq(null));
 	}
 
 	@Test
@@ -1074,7 +1074,7 @@ public class UvHydroReportBuilderTest {
 		given(locationService.getByLocationIdentifier(any(String.class))).willReturn(primaryLoc);
 		given(curvesService.getAqcuFilteredRatingCurves(any(List.class), any(Instant.class), any(Instant.class))).willReturn(new ArrayList<>());
 		given(curvesService.getAqcuFilteredRatingShifts(any(List.class), any(Instant.class), any(Instant.class))).willReturn(new ArrayList<>());
-		given(curvesService.getRawResponse(any(String.class), any(Double.class), any(Instant.class), any(Instant.class))).willReturn(
+		given(curvesService.getRawResponse(any(String.class), eq(null), eq(null), eq(null))).willReturn(
 			new RatingCurveListServiceResponse().setRatingCurves(new ArrayList<>())
 		);
 		given(fieldVisitDescriptionService.getDescriptions(any(String.class), any(ZoneOffset.class), any(UvHydroRequestParameters.class))).willReturn(
@@ -1307,7 +1307,7 @@ public class UvHydroReportBuilderTest {
 		given(locationService.getByLocationIdentifier(any(String.class))).willReturn(primaryLoc);
 		given(curvesService.getAqcuFilteredRatingCurves(any(List.class), any(Instant.class), any(Instant.class))).willReturn(new ArrayList<>());
 		given(curvesService.getAqcuFilteredRatingShifts(any(List.class), any(Instant.class), any(Instant.class))).willReturn(new ArrayList<>());
-		given(curvesService.getRawResponse(any(String.class), any(Double.class), any(Instant.class), any(Instant.class))).willReturn(
+		given(curvesService.getRawResponse(any(String.class), eq(null), eq(null), eq(null))).willReturn(
 			new RatingCurveListServiceResponse().setRatingCurves(new ArrayList<>())
 		);
 		given(fieldVisitDescriptionService.getDescriptions(any(String.class), any(ZoneOffset.class), any(UvHydroRequestParameters.class))).willReturn(
@@ -1503,7 +1503,7 @@ public class UvHydroReportBuilderTest {
 		given(locationService.getByLocationIdentifier(any(String.class))).willReturn(primaryLoc);
 		given(curvesService.getAqcuFilteredRatingCurves(any(List.class), any(Instant.class), any(Instant.class))).willReturn(new ArrayList<>());
 		given(curvesService.getAqcuFilteredRatingShifts(any(List.class), any(Instant.class), any(Instant.class))).willReturn(new ArrayList<>());
-		given(curvesService.getRawResponse(any(String.class), any(Double.class), any(Instant.class), any(Instant.class))).willReturn(
+		given(curvesService.getRawResponse(any(String.class), eq(null), eq(null), eq(null))).willReturn(
 			new RatingCurveListServiceResponse().setRatingCurves(new ArrayList<>())
 		);
 		given(fieldVisitDescriptionService.getDescriptions(any(String.class), any(ZoneOffset.class), any(UvHydroRequestParameters.class))).willReturn(
@@ -1696,7 +1696,7 @@ public class UvHydroReportBuilderTest {
 		given(locationService.getByLocationIdentifier(any(String.class))).willReturn(primaryLoc);
 		given(curvesService.getAqcuFilteredRatingCurves(any(List.class), any(Instant.class), any(Instant.class))).willReturn(new ArrayList<>());
 		given(curvesService.getAqcuFilteredRatingShifts(any(List.class), any(Instant.class), any(Instant.class))).willReturn(new ArrayList<>());
-		given(curvesService.getRawResponse(any(String.class), any(Double.class), any(Instant.class), any(Instant.class))).willReturn(
+		given(curvesService.getRawResponse(any(String.class), eq(null), eq(null), eq(null))).willReturn(
 			new RatingCurveListServiceResponse().setRatingCurves(new ArrayList<>())
 		);
 		given(fieldVisitDescriptionService.getDescriptions(any(String.class), any(ZoneOffset.class), any(UvHydroRequestParameters.class))).willReturn(
@@ -1925,7 +1925,7 @@ public class UvHydroReportBuilderTest {
 		given(locationService.getByLocationIdentifier(any(String.class))).willReturn(primaryLoc);
 		given(curvesService.getAqcuFilteredRatingCurves(any(List.class), any(Instant.class), any(Instant.class))).willReturn(new ArrayList<>());
 		given(curvesService.getAqcuFilteredRatingShifts(any(List.class), any(Instant.class), any(Instant.class))).willReturn(new ArrayList<>());
-		given(curvesService.getRawResponse(any(String.class), any(Double.class), any(Instant.class), any(Instant.class))).willReturn(
+		given(curvesService.getRawResponse(any(String.class), eq(null), eq(null), eq(null))).willReturn(
 			new RatingCurveListServiceResponse().setRatingCurves(new ArrayList<>())
 		);
 		given(fieldVisitDescriptionService.getDescriptions(any(String.class), any(ZoneOffset.class), any(UvHydroRequestParameters.class))).willReturn(
