@@ -16,30 +16,27 @@
         <additionalparam>-Xdoclint:none</additionalparam>
         <failOnMissingWebXml>false</failOnMissingWebXml>
         <springfox.version>2.8.0</springfox.version>
-        <aquarius.sdk.version>18.8.1</aquarius.sdk.version>
-        <aqcu.framework.version>0.0.7-SNAPSHOT</aqcu.framework.version>
-        <spring.boot.version>1.5.13.RELEASE</spring.boot.version>
+        <aqcu.framework.version>0.0.8-SNAPSHOT</aqcu.framework.version>
+        <spring.boot.version>2.2.0.RELEASE</spring.boot.version>
     </properties>
 
-    <parent>
+<parent>
         <groupId>gov.usgs.water</groupId>
         <artifactId>code-quality</artifactId>
         <version>1.1.0</version>
     </parent>
 
-
     <repositories>
-        <repository>
-            <id>aqcu-maven-centralized</id>
-            <name>AQCU Maven Centralized (Artifactory)</name>
-            <url>${wma.artifactory.url}/aqcu-maven-centralized/</url>
-        </repository>
         <repository>
             <id>wma-maven-centralized</id>
             <name>Water Mission Area Snapshots and Releases</name>
             <url>https://cida.usgs.gov/artifactory/wma-maven-centralized</url>
         </repository>
-
+        <repository>
+            <id>aqcu-maven-centralized</id>
+            <name>AQCU Maven Centralized (Artifactory)</name>
+            <url>https://cida.usgs.gov/artifactory/aqcu-maven-centralized</url>
+        </repository>
     </repositories>
 
     <dependencyManagement>
@@ -47,7 +44,7 @@
             <dependency>
                 <groupId>org.springframework.cloud</groupId>
                 <artifactId>spring-cloud-dependencies</artifactId>
-                <version>Edgware.SR3</version>
+                <version>Greenwich.SR3</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -63,52 +60,24 @@
 
     <dependencies>
         <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-oauth2</artifactId>
+        </dependency>
+
+        <dependency>
             <groupId>gov.usgs.aqcu</groupId>
             <artifactId>aqcu-framework</artifactId>
             <version>${aqcu.framework.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>gov.usgs.aqcu</groupId>
-            <artifactId>aqcu-framework</artifactId>
-            <version>${aqcu.framework.version}</version>
-            <type>test-jar</type>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.springframework.cloud</groupId>
-            <artifactId>spring-cloud-starter-config</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.springframework.cloud</groupId>
-            <artifactId>spring-cloud-starter-hystrix-dashboard</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.springframework.cloud</groupId>
-            <artifactId>spring-cloud-starter-zuul</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.springframework.cloud</groupId>
-            <artifactId>spring-cloud-starter-feign</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>io.github.openfeign.form</groupId>
-            <artifactId>feign-form-spring</artifactId>
-            <version>3.2.2</version>
-        </dependency>
-        <dependency>
-            <groupId>io.github.openfeign</groupId>
-            <artifactId>feign-httpclient</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.springframework.retry</groupId>
-            <artifactId>spring-retry</artifactId>
         </dependency>
 
         <dependency>
@@ -124,30 +93,6 @@
         </dependency>
 
         <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-tomcat</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.webjars</groupId>
-            <artifactId>webjars-locator</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-security</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.cloud</groupId>
-            <artifactId>spring-cloud-starter-oauth2</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>com.aquaticinformatics</groupId>
-            <artifactId>aquarius.sdk</artifactId>
-            <version>${aquarius.sdk.version}</version>
-        </dependency>
-        <dependency>
             <groupId>javax.xml.bind</groupId>
             <artifactId>jaxb-api</artifactId>
             <version>2.3.0</version>
@@ -160,10 +105,13 @@
 
         <!--  Testing/Development  -->
         <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-devtools</artifactId>
-            <optional>true</optional>
+            <groupId>gov.usgs.aqcu</groupId>
+            <artifactId>aqcu-framework</artifactId>
+            <version>${aqcu.framework.version}</version>
+            <type>test-jar</type>
+            <scope>test</scope>
         </dependency>
+
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>

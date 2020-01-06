@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.3.xsd">
+   <suppress>
+        <notes><![CDATA[
+        This suppresses detection of CVE-2018-1258 from Spring Security > 5.0.5. See: https://github.com/jeremylong/DependencyCheck/issues/1827.
+        ]]></notes>
+        <gav regex="true">org\.springframework\.security:spring.*</gav>
+        <cve>CVE-2018-1258</cve>
+   </suppress>
+</suppressions>
