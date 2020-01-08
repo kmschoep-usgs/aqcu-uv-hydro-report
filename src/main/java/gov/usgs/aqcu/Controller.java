@@ -47,9 +47,9 @@ public class Controller {
 	}
 	
 	@GetMapping(value="/rawData", produces={MediaType.APPLICATION_JSON_VALUE})
-	public ResponseEntity<UvHydroReport> getReportRawData(@Validated UvHydroRequestParameters requestParameters) throws Exception {
+	public ResponseEntity<String> getReportRawData(@Validated UvHydroRequestParameters requestParameters) throws Exception {
 		UvHydroReport report = reportBuilderService.buildReport(requestParameters, getRequestingUser());
-		return new ResponseEntity<UvHydroReport>(report, new HttpHeaders(), HttpStatus.OK);
+		return new ResponseEntity<String>(gson.toJson(report), new HttpHeaders(), HttpStatus.OK);
 	}
 	
 	String getRequestingUser() {
