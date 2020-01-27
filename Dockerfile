@@ -18,6 +18,11 @@ ENV SONAR_LOGIN=$SONAR_LOGIN
 COPY pom.xml /build/pom.xml
 WORKDIR /build
 
+RUN if getent ahosts "sslhelp.doi.net" > /dev/null 2>&1; then \
+		wget 'http://sslhelp.doi.net/docs/DOIRootCA2.cer' && \
+		keytool -import -trustcacerts -file DOIRootCA2.cer -alias DOIRootCA2.cer -keystore $JAVA_HOME/jre/lib/security/cacerts -noprompt -storepass changeit; \
+	fi
+
 #download all maven dependencies (this will only re-run if the pom has changed)
 RUN mvn -B dependency:go-offline
 
